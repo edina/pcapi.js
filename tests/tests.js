@@ -40,7 +40,7 @@ console.log(test_pcapi.getProvider())
 
 test("check PCAPI URL", function(assert){
 
-    assert.equal("http://cobwebsvc.edina.ac.uk/1.3/pcapi", test_pcapi.getCloudProviderUrl(), "URL is right");
+    assert.equal(config.options.url, test_pcapi.getCloudProviderUrl(), "URL is right");
     asyncTest("Test Providers", function(assert){
         test_pcapi.getProviders(function(success, data){
             assert.ok(success, "The api call for providers is working");
