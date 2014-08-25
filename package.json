@@ -1,0 +1,27 @@
+{
+    "name": "pcapi.js",
+    "version": "1.0.0",
+    "description": "A javascript API for PCAPI",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "pcapi",
+        "dropbox",
+        "edina"
+    ],
+    "author": "P. Terzis",
+    "license": "BSD",
+    "preferGlobal": true,
+    "devDependencies": {
+        "uglify-js": "latest",
+        "clean-css": "2.0.2",
+        "bower": "1.2.8",
+        "jshint": "2.5.3",
+        "qunit": "0.7.2",
+        "qunit-cli": "0.1.4"
+    },
+    "engines": {
+        "node": ">=0.8.0"
+    }
+}
