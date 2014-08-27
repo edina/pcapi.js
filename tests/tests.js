@@ -40,7 +40,7 @@ console.log(test_pcapi.getProvider())
 
 test("check PCAPI URL", function(assert){
 
-    assert.equal(config.options.url, test_pcapi.getCloudProviderUrl(), "URL is right");
+    assert.equal(config.options.url+"/"+config.options.version+"/pcapi", test_pcapi.getCloudProviderUrl(), "URL is right");
     asyncTest("Test Providers", function(assert){
         test_pcapi.getProviders(function(success, data){
             assert.ok(success, "The api call for providers is working");
@@ -171,8 +171,8 @@ test("Test saveItem, getItem", function(assert){
     };
 
     //set the userid
-    test_pcapi.setUserId(config.options.userid);
-    assert.equal(config.options.userid, test_pcapi.getUserId(), "The userid is the right one");
+    test_pcapi.setUserId(test_pcapi.getParameters()["oauth_token"]);
+    assert.equal(test_pcapi.getParameters()["oauth_token"], test_pcapi.getUserId(), "The userid is the right one");
 
     //test save record
     asyncTest("Save/Rename/Update/Delete record", function(assert){
