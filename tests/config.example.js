@@ -38,7 +38,6 @@ var config = {
     },
     options: {
         'url': '<PCAPI url>',
-        'version': '<version number>',
-        'userid': '<valid token>'
+        'version': '<version number>'
     }
 };

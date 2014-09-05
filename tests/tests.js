@@ -33,9 +33,55 @@ DAMAGE.
 
 var providers = ["dropbox", "local"];
 
+//function dataURItoBlob(dataURI) {
+//    // convert base64/URLEncoded data component to raw binary data held in a string
+//    var byteString;
+//    if (dataURI.split(',')[0].indexOf('base64') >= 0)
+//        byteString = atob(dataURI.split(',')[1]);
+//    else
+//        byteString = unescape(dataURI.split(',')[1]);
+//
+//    // separate out the mime component
+//    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+//
+//    // write the bytes of the string to a typed array
+//    var ia = new Uint8Array(byteString.length);
+//    for (var i = 0; i < byteString.length; i++) {
+//        ia[i] = byteString.charCodeAt(i);
+//    }
+//
+//    return new Blob([ia], {type:mimeString});
+//}
+//
+//function b64toBlob(b64Data, contentType, sliceSize) {
+//    contentType = contentType || '';
+//    sliceSize = sliceSize || 512;
+//
+//    var byteCharacters = atob(b64Data);
+//    var byteArrays = [];
+//
+//    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+//        var slice = byteCharacters.slice(offset, offset + sliceSize);
+//
+//        var byteNumbers = new Array(slice.length);
+//        for (var i = 0; i < slice.length; i++) {
+//            byteNumbers[i] = slice.charCodeAt(i);
+//        }
+//
+//        var byteArray = new Uint8Array(byteNumbers);
+//
+//        byteArrays.push(byteArray);
+//    }
+//
+//    var blob = new Blob(byteArrays, {type: contentType});
+//    return blob;
+//}
+
 var test_pcapi = pcapi();
 test_pcapi.init(config.options);
 test_pcapi.setProvider(providers[0]);
+
+module('PCAPI URL with dropbox');
 
 test("check PCAPI URL", function(assert){
 
@@ -108,6 +154,8 @@ test("PCAPI Login", function(assert){
     }
 });
 
+module('PCAPI save/get record');
+
 test("Test saveItem, getItem", function(assert){
 
     //set the userid
@@ -148,13 +196,13 @@ test("Test saveItem, getItem", function(assert){
 
                     //test get all records
                     stop();
-                    test_pcapi.getItems("records", undefined, function(success, data){
+                    test_pcapi.getItems("records", "", undefined, function(success, data){
 
                         assert.ok(success, "The get records is working");
 
                         //test filtering by editor
                         stop();
-                        test_pcapi.getItems("records", {"filter":"editor", "id": "myEditor.edtr"}, function(success, data){
+                        test_pcapi.getItems("records", "", {"filter":"editor", "id": "myEditor.edtr"}, function(success, data){
                             assert.ok(success, "The filter records is working");
                             
                             stop();
@@ -162,27 +210,41 @@ test("Test saveItem, getItem", function(assert){
                                 assert.ok(success, "The item exists");
                                 assert.equal(data.properties.timestamp, "2014-08-20T14:18:25.514Z", "The property is the same");
                                 
-                                //test_pcapi.uploadFile("records", )
-                                
-                                //delete records
+                                //TO-DO: investigate why is not working
+                                //var dataURL = canvas.toDataURL('image/jpeg', 0.5);
+                                //var blob = b64toBlob(image, "image/jpg");
+                                //var blob = new Blob([image], {
+                                //    type: "image",
+                                //    filename: "test",
+                                //    name: "test.jpg"
+                                //});
+                                //test_pcapi.uploadFile('records/'+record1.name, "test.jpg", "aaaaaaaaaaaa", function(success, data){
+                                //    console.log(data)
+                                //});
                                 stop();
-                                test_pcapi.deleteItem("records", record1, function(success, data){
-                                    assert.ok(true, "Record was deleted");
+                                test_pcapi.getAssets(function(success, data){
+                                    assert.equal(1, data.records.length, "There is only one record with images");
+                                    //delete records
+                                    stop();
+                                    test_pcapi.deleteItem("records", record1, function(success, data){
+                                        assert.ok(true, "Record was deleted");
+                                        start();
+                                    });
+
+                                    stop();
+                                    record1.name = "Text (20-08-2014 16h18m18s) (1)";
+                                    test_pcapi.deleteItem("records", record1, function(success, data){
+                                        assert.ok(true, "Record was deleted");
+                                        start();
+                                    });
+
+                                    stop();
+                                    test_pcapi.deleteItem("records", record2, function(success, data){
+                                        assert.ok(true, "Record was deleted");
+                                        start();
+                                    });
                                     start();
-                                });
-        
-                                stop();
-                                record1.name = "Text (20-08-2014 16h18m18s) (1)";
-                                test_pcapi.deleteItem("records", record1, function(success, data){
-                                    assert.ok(true, "Record was deleted");
-                                    start();
-                                });
-        
-                                stop();
-                                test_pcapi.deleteItem("records", record2, function(success, data){
-                                    assert.ok(true, "Record was deleted");
-                                    start();
-                                });
+                                })
                                 start();
                             });
                             start();
@@ -197,6 +259,14 @@ test("Test saveItem, getItem", function(assert){
             start();
         });
     });
+});
+
+module('PCAPI save/get editor');
+
+test("Test save, get Editor", function(assert){
+    //set the userid
+    test_pcapi.setUserId(test_pcapi.getParameters()["oauth_token"]);
+    assert.equal(test_pcapi.getParameters()["oauth_token"], test_pcapi.getUserId(), "The userid is the right one");
 
     //test save editor
     asyncTest("Save/Rename/Delete editor", function(assert){
@@ -213,7 +283,7 @@ test("Test saveItem, getItem", function(assert){
 
                 stop();
                 //get all editors
-                test_pcapi.getItems("editors", undefined, function(success, data){
+                test_pcapi.getItems("editors", "", undefined, function(success, data){
 
                     assert.equal(0, data.error, "The getItems request is succesful");
                     for(var i=0; i<data.metadata.length; i++){
@@ -223,11 +293,9 @@ test("Test saveItem, getItem", function(assert){
                     }
                     
                     stop();
-                    //test getItem for a record
+                    //test getItem for an editor
                     test_pcapi.getItem("editors", editor1.name+".edtr", "html", function(success, data){
                         assert.ok(success, "The item exists");
-                        console.log($(data));
-                        console.log($(data).find('.fieldcontain').length);
 
                         //delete all editors
                         stop();

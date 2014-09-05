@@ -29,7 +29,13 @@ var record2 = {
     },
     "properties": {
         "editor": "myEditor.edtr",
-        "fields": [],
+        "fields": [
+                   {
+                    "id": "fieldcontain-image-1",
+                    "val": "1409925195999.jpg",
+                    "label": "Image"
+                    }
+                ],
         "timestamp": "2014-10-20T14:18:25.514Z"
     },
     "name": "Text (20-10-2014 16h18m18s)"

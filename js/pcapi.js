@@ -223,6 +223,16 @@ var pcapi = function() {
         },
 
         /**
+         * function for getting the assets urls
+         * @param callback function
+         */
+        getAssets: function(){
+            this.getItems("records", "assets/images", {"frmt": "url"}, function(success, data){
+                callback(success, data);
+            })
+        },
+
+        /**
          * @return The URL to the cloud provider.
          */
         getCloudProviderUrl: function() {
@@ -297,10 +307,11 @@ var pcapi = function() {
         /**
          * Fetch all the records|editors on the cloud
          * @param remoteDir remote directory [records|editors]
+         * @param extra path for url
          * @param callback function after fetching the items
          */
-        getItems: function(remoteDir, filters, callback){
-            var url = buildUrl(remoteDir, "");
+        getItems: function(remoteDir, extras, filters, callback){
+            var url = buildUrl(remoteDir, extras);
 
             console.debug("Get items of "+remoteDir+" with " + url);
             //if it's undefined make it empty object in order not to break it
@@ -514,13 +525,13 @@ var pcapi = function() {
         /**
          * function for uploading a file
          * @param remoteDir
-         * @param filename
+         * @param file
          */
-        uploadFile: function(remoteDir, filename, callback){
+        uploadFile: function(remoteDir, filename, file, callback){
 
             var url = buildFSUrl(remoteDir, filename);
 
-            console.debug("Upload item "+filename+" to "+remoteDir+" with " + url);
+            console.debug("Upload item "+file.name+" to "+remoteDir+" with " + url);
 
             $.ajax({
                 type: "POST",
