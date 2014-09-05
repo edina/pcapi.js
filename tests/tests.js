@@ -36,7 +36,6 @@ var providers = ["dropbox", "local"];
 var test_pcapi = pcapi();
 test_pcapi.init(config.options);
 test_pcapi.setProvider(providers[0]);
-console.log(test_pcapi.getProvider())
 
 test("check PCAPI URL", function(assert){
 
@@ -110,65 +109,6 @@ test("PCAPI Login", function(assert){
 });
 
 test("Test saveItem, getItem", function(assert){
-    //raw data
-    var record1 = {
-        "type": "Feature",
-        "geometry": {
-            "type": "Point",
-            "coordinates": [
-                5.366076115152644,
-                51.80957813315172
-            ]
-        },
-        "properties": {
-            "editor": "text.edtr",
-            "fields": [],
-            "timestamp": "2014-08-20T14:18:25.514Z"
-        },
-        "name": "Text (20-08-2014 16h18m18s)"
-    };
-
-    var record2 = {
-        "type": "Feature",
-        "geometry": {
-            "type": "Point",
-            "coordinates": [
-                5.466076115152644,
-                51.90957813315172
-            ]
-        },
-        "properties": {
-            "editor": "test.edtr",
-            "fields": [],
-            "timestamp": "2014-10-20T14:18:25.514Z"
-        },
-        "name": "Text (20-10-2014 16h18m18s)"
-    };
-
-    var editor1 = {
-        name: "ttestt",
-        editor: [ '<div class="fieldcontain" id="fieldcontain-text-1">',
-                 '<label for="form-text-1">Title</label>',
-                 '<input name="form-text-1" id="form-text-1" type="text" required="" placeholder="Placeholder" maxlength="10">',
-                 '</div>',
-                 '<div class="fieldcontain" id="fieldcontain-image-1">',
-                 '<div class="button-wrapper button-camera">',
-                 '<input name="form-image-1" id="form-image-1" type="file" accept="image/png" capture="camera" required="" class="camera">',
-                 '<label for="form-image-1">Take</label>',
-                 '</div></div>']
-    };
-
-    var editor2 = {
-        name: "myEditor",
-        editor: ['<div class="fieldcontain" id="fieldcontain-text-1">',
-                 '<label for="form-text-1">Title</label>',
-                 '<input name="form-text-1" id="form-text-1" type="text" required="" placeholder="Placeholder" maxlength="10">',
-                 '</div>',
-                 '<div class="fieldcontain" id="fieldcontain-textarea-1">',
-                 '<label for="form-textarea-1">Description</label>',
-                 '<textarea name="form-textarea-1" id="form-textarea-1" placeholder="Placeholder" required="" readonly="readonly"></textarea>',
-                 '</div>']
-    };
 
     //set the userid
     test_pcapi.setUserId(test_pcapi.getParameters()["oauth_token"]);
@@ -216,25 +156,33 @@ test("Test saveItem, getItem", function(assert){
                         stop();
                         test_pcapi.getItems("records", {"filter":"editor", "id": "myEditor.edtr"}, function(success, data){
                             assert.ok(success, "The filter records is working");
-                            console.log(data)
                             
-                            //delete records
                             stop();
-                            test_pcapi.deleteItem("records", record1, function(success, data){
-                                assert.ok(true, "Record was deleted");
-                                start();
-                            });
-    
-                            stop();
-                            record1.name = "Text (20-08-2014 16h18m18s) (1)";
-                            test_pcapi.deleteItem("records", record1, function(success, data){
-                                assert.ok(true, "Record was deleted");
-                                start();
-                            });
-    
-                            stop();
-                            test_pcapi.deleteItem("records", record2, function(success, data){
-                                assert.ok(true, "Record was deleted");
+                            test_pcapi.getItem("records", record1.name, "json", function(success, data){
+                                assert.ok(success, "The item exists");
+                                assert.equal(data.properties.timestamp, "2014-08-20T14:18:25.514Z", "The property is the same");
+                                
+                                //test_pcapi.uploadFile("records", )
+                                
+                                //delete records
+                                stop();
+                                test_pcapi.deleteItem("records", record1, function(success, data){
+                                    assert.ok(true, "Record was deleted");
+                                    start();
+                                });
+        
+                                stop();
+                                record1.name = "Text (20-08-2014 16h18m18s) (1)";
+                                test_pcapi.deleteItem("records", record1, function(success, data){
+                                    assert.ok(true, "Record was deleted");
+                                    start();
+                                });
+        
+                                stop();
+                                test_pcapi.deleteItem("records", record2, function(success, data){
+                                    assert.ok(true, "Record was deleted");
+                                    start();
+                                });
                                 start();
                             });
                             start();
@@ -269,26 +217,36 @@ test("Test saveItem, getItem", function(assert){
 
                     assert.equal(0, data.error, "The getItems request is succesful");
                     for(var i=0; i<data.metadata.length; i++){
-                        if(data.metadata[i] === "/editors/"+editor1.name){
+                        if(data.metadata[i] === "/editors/"+editor1.name+".edtr"){
                             assert.ok(true, "The editor "+editor1.name+ "is in the list of editors");
                         }
                     }
-                    //delete all editors
+                    
                     stop();
-                    test_pcapi.deleteItem("editors", editor1.name, function(success, data){
-                        assert.ok(true, "Editor was deleted");
-                        start();
-                    });
+                    //test getItem for a record
+                    test_pcapi.getItem("editors", editor1.name+".edtr", "html", function(success, data){
+                        assert.ok(success, "The item exists");
+                        console.log($(data));
+                        console.log($(data).find('.fieldcontain').length);
 
-                    stop();
-                    test_pcapi.deleteItem("editors", editor1.name+" (1)", function(success, data){
-                        assert.ok(true, "Editor was deleted");
-                        start();
-                    });
-
-                    stop();
-                    test_pcapi.deleteItem("editors", editor2.name, function(success, data){
-                        assert.ok(true, "Editor was deleted");
+                        //delete all editors
+                        stop();
+                        test_pcapi.deleteItem("editors", editor1.name, function(success, data){
+                            assert.ok(true, "Editor was deleted");
+                            start();
+                        });
+                        
+                        stop();
+                        test_pcapi.deleteItem("editors", editor1.name+" (1)", function(success, data){
+                            assert.ok(true, "Editor was deleted");
+                            start();
+                        });
+                        
+                        stop();
+                        test_pcapi.deleteItem("editors", editor2.name, function(success, data){
+                            assert.ok(true, "Editor was deleted");
+                            start();
+                        });
                         start();
                     });
                     start();

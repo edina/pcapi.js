@@ -33,6 +33,24 @@ DAMAGE.
 
 var pcapi = function() {
 
+    var buildUrl = function(remoteDir, item){
+        var userId = _this.getUserId();
+        if (userId !== "") {
+            userId = "/"+userId;
+        }
+        return _this.getCloudProviderUrl() + '/'+remoteDir+'/' +
+                _this.getProvider() + userId +'/'+item;
+    };
+
+    var buildFSUrl = function(remoteDir, item){
+        var userId = _this.getUserId();
+        if (userId != "") {
+            userId = "/"+userId;
+        }
+        return _this.getCloudProviderUrl() + '/fs/' +
+                _this.getProvider() + userId +'/'+remoteDir+'/'+item;
+    };
+
     /**
      * Unset user login id.
      */
@@ -174,9 +192,7 @@ var pcapi = function() {
          * @param callback function after fetching the items
          */
         deleteItem: function(remoteDir, item, callback){
-            
-            var url = this.getCloudProviderUrl() + '/'+remoteDir+'/' +
-                this.getProvider() + '/' + this.getUserId() +'/';
+            var url = buildUrl(remoteDir, "");
 
             console.debug("Delete item from "+remoteDir+" with " + url);
             if(remoteDir === "records"){
@@ -207,13 +223,6 @@ var pcapi = function() {
         },
 
         /**
-         * filter Records
-         */
-        filterRecords: function(callback){
-            this.getItems
-        },
-
-        /**
          * @return The URL to the cloud provider.
          */
         getCloudProviderUrl: function() {
@@ -226,8 +235,7 @@ var pcapi = function() {
          * @param callback function after fetching the items
          */
         getFSItems: function(remoteDir, callback){
-            var url = this.getCloudProviderUrl() + '/fs/' +
-                this.getProvider() + '/' + this.getUserId() +'/'+remoteDir+'/';
+            var url = buildFSUrl(remoteDir, "");
 
             console.debug("Get items of "+remoteDir+" with " + url);
 
@@ -260,16 +268,16 @@ var pcapi = function() {
          * @param callback function after fetching the items
          */
         getItem: function(remoteDir, item, dataType, callback){
-            var url = this.getCloudProviderUrl() + '/'+remoteDir+'/' +
-                this.getProvider() + '/' + this.getUserId() +'/'+item;
+            var url = buildUrl(remoteDir, item);
 
-            console.debug("Get item "+item+" of "+remoteDir+" with " + url);
+            console.debug("Get item "+item+" of "+remoteDir+" with " + url + " and dataType " + dataType);
 
             $.ajax({
                 type: "GET",
                 dataType: dataType,
                 url: url,
                 success: function(data){
+                    console.log(data)
                     if(data.error == 1){
                         callback(false);
                     }
@@ -292,8 +300,7 @@ var pcapi = function() {
          * @param callback function after fetching the items
          */
         getItems: function(remoteDir, filters, callback){
-            var url = this.getCloudProviderUrl() + '/'+remoteDir+'/' +
-                this.getProvider() + '/' + this.getUserId() +'/';
+            var url = buildUrl(remoteDir, "");
 
             console.debug("Get items of "+remoteDir+" with " + url);
             //if it's undefined make it empty object in order not to break it
@@ -409,18 +416,18 @@ var pcapi = function() {
          */
         saveItem: function(remoteDir, item, callback){
 
-            var url = this.getCloudProviderUrl() + '/'+remoteDir+'/' +
-                this.getProvider() + '/' + this.getUserId() +'/';
+            var url = buildUrl(remoteDir, "");
 
             console.debug("Post item to "+remoteDir+" with " + url);
             var data;
             if(remoteDir === "records"){
                 data = JSON.stringify(item, undefined, 2);
-                url = url+item.name;
+                url = url+encodeURIComponent(item.name);
             }
             else if(remoteDir === "editors"){
-                data = item.editor;
-                url = url+item.name+".edtr";
+                data = item.editor.join("");
+                url = url+encodeURIComponent(item.name)+".edtr";
+                console.log(data)
             }
 
             $.ajax({
@@ -469,9 +476,8 @@ var pcapi = function() {
          * @param callback function after fetching the items
          */
         updateItem: function(remoteDir, item, file, callback){
-            
-            var url = this.getCloudProviderUrl() + '/'+remoteDir+'/' +
-                this.getProvider() + '/' + this.getUserId() +'/';
+
+            var url = buildUrl(remoteDir, "");
 
             console.debug("PUT item to "+remoteDir+" with " + url);
             var data;
@@ -511,8 +517,8 @@ var pcapi = function() {
          * @param filename
          */
         uploadFile: function(remoteDir, filename, callback){
-            var url = this.getCloudProviderUrl() + '/fs/' +
-                this.getProvider() + '/' + this.getUserId() +'/'+remoteDir+'/'+filename;
+
+            var url = buildFSUrl(remoteDir, filename);
 
             console.debug("Upload item "+filename+" to "+remoteDir+" with " + url);
 
