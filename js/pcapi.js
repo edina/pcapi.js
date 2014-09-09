@@ -226,7 +226,7 @@ var pcapi = function() {
          * function for getting the assets urls
          * @param callback function
          */
-        getAssets: function(){
+        getAssets: function(callback){
             this.getItems("records", "assets/images", {"frmt": "url"}, function(success, data){
                 callback(success, data);
             })
@@ -552,13 +552,6 @@ var pcapi = function() {
                     callback(false, obj.error);
                 }
             });
-        },
-
-        /**
-         *
-         */
-        uploadItem: function(){
-            
         }
     };
     
