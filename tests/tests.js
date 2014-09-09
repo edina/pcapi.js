@@ -99,7 +99,7 @@ test_pcapi.init(config.options[provider]);
 //set the provider
 test_pcapi.setProvider(provider);
 //set the userid
-test_pcapi.setUserId(test_pcapi.getParameters()["oauth_token"]);
+test_pcapi.setCloudLogin(test_pcapi.getParameters()["oauth_token"]);
 
 config.autostart = false;
 
@@ -178,7 +178,7 @@ test("Check PCAPI Login", function(assert){
 });
 
 test("Check UserId", function(assert){
-    assert.equal(test_pcapi.getParameters()["oauth_token"], test_pcapi.getUserId(), "The userid is the right one");
+    assert.equal(test_pcapi.getParameters()["oauth_token"], test_pcapi.getCloudLoginId(), "The userid is the right one");
 });
 
 module("Records", {

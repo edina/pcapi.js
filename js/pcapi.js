@@ -31,10 +31,10 @@ DAMAGE.
 
 "use strict";
 
-var pcapi = function() {
+var pcapi = function(){
 
     var buildUrl = function(remoteDir, item){
-        var userId = _this.getUserId();
+        var userId = _this.getCloudLoginId();
         if (userId !== "") {
             userId = "/"+userId;
         }
@@ -43,7 +43,7 @@ var pcapi = function() {
     };
 
     var buildFSUrl = function(remoteDir, item){
-        var userId = _this.getUserId();
+        var userId = _this.getCloudLoginId();
         if (userId != "") {
             userId = "/"+userId;
         }
@@ -52,23 +52,80 @@ var pcapi = function() {
     };
 
     /**
-     * Unset user login id.
+     * Login to cloud provider.
+     * @paran provider The provider type.
+     * @param callback Function called after login attempt.
+     * @param cbrowser Function to allow caller requires access to childbrowser.
      */
-    var clearCloudLogin = function(){
-        localStorage.setItem('cloud-user', JSON.stringify({'id': undefined}));
+    var doLogin = function(provider, callback, cbrowser){
+        var loginUrl = _this.getCloudProviderUrl() + '/auth/' + provider;
+        if (provider === 'local') {
+            doLoginLocal(callback, cbrowser, loginUrl);
+        }
+        else{
+            doLoginDropBox(callback, cbrowser, loginUrl);
+        }
     };
 
     /**
-     * Login to cloud provider.
-     * @param callback Function called after login attemt.
-     * @param cbrowser Function to allow caller requires access to childbrowser.
+     * Login to a local cloud provider.
+     * @param callback Function called after login attempt.
+     * @param loginUrl
      */
-    var doLogin = function(callback, cbrowser){
-        var loginUrl = _this.getCloudProviderUrl() + '/auth/'+_this.getProvider();
+    var doLoginLocal = function(callback, cbrowser, loginUrl){
+        var pollTimer, pollTimerCount = 0, pollInterval = 3000, pollForMax = 5 * 60 * 1000; //min
+        var pollUrl = loginUrl + '?async=true';
+        console.debug('Login with: ' + pollUrl);
+        var cb = window.open(pollUrl, '_blank', 'location=no');
 
+
+        // close child browser
+        var closeCb = function(userId){
+            clearInterval(pollTimer);
+            callback(userId);
+        };
+
+        console.debug('Poll: ' + pollUrl);
+        pollTimer = setInterval(function(){
+            $.ajax({
+                url: pollUrl,
+                timeout: 3000,
+                success: function(pollData){
+                    pollTimerCount += pollInterval;
+
+                    if(pollData.state === 1 || pollTimerCount > pollForMax){
+                        var cloudUserId = "local";
+                        if(pollData.state === 1 ){
+                            _this.setCloudLogin(cloudUserId);
+                        }
+                        cb.close();
+                        closeCb("local");
+                    }
+                },
+                error: function(error){
+                    console.error("Problem polling api: " + error.statusText);
+                    closeCb (-1);
+                },
+                cache: false
+            });
+        }, pollInterval);
+
+        if(cbrowser){
+            // caller may want access to child browser reference
+            cbrowser(cb);
+        }
+    };
+
+    /**
+     * Login to dropbox.
+     * @param callback Function called after login attempt.
+     * @param cbrowser Function to allow caller requires access to childbrowser.
+     * @param loginUrl
+     */
+    var doLoginDropBox = function(callback, cbrowser, loginUrl){
         var pollTimer, pollTimerCount = 0, pollInterval = 3000, pollForMax = 5 * 60 * 1000; //min
 
-        var userId = _this.getUserId();
+        var userId = getCloudLoginId();
         if(userId !== undefined){
             console.debug("got a user id: " + userId);
             loginUrl += '/' + userId;
@@ -89,7 +146,7 @@ var pcapi = function() {
                 // close child browser
                 var closeCb = function(userId){
                     clearInterval(pollTimer);
-                    callback(true, userId);
+                    callback(userId);
                 };
 
                 // open dropbox login in child browser
@@ -106,7 +163,7 @@ var pcapi = function() {
 
                             if(pollData.state === 1 || pollTimerCount > pollForMax){
                                 if(pollData.state === 1 ){
-                                    _this.setUserId(cloudUserId);
+                                    _this.setCloudLogin(cloudUserId);
                                 }
                                 cb.close();
                                 closeCb(cloudUserId);
@@ -138,7 +195,6 @@ var pcapi = function() {
                 }
 
                 console.error(msg);
-                callback(false, msg);
             }
         });
     };
@@ -171,19 +227,73 @@ var pcapi = function() {
          */
         checkIfLoggedIn: function(token, callback){
             console.log("check if user is logged in");
-
-            $.ajax({
-                url: this.getCloudProviderUrl() + '/auth/'+this.getProvider()+"/"+token,
-                type: "GET",
-                cache: false,
-                success: function(response){
-                    callback(true, response);
-                },
-                error: function(jqXHR, status, error){
-                    callback(false, error);
+            var user = this.getCloudLogin();
+            if(user !== null && user.id){
+                var url = pcapi.getCloudProviderUrl() + '/auth/'+this.getProvider();
+                if (user.id != "local") {
+                    url += '/'+user.id;
                 }
-            });
+
+                console.debug("Check user with: " + url);
+                $.ajax({
+                    url: url,
+                    type: "GET",
+                    dataType: 'json',
+                    cache: false,
+                    success: $.proxy(function(response){
+                        if(data.state === 1){
+                            this.setCloudLogin(user.id, user.cursor);
+                        }
+                        callback(true, response);
+                    }, this),
+                    error: function(jqXHR, status, error){
+                        callback(false, error);
+                    }
+                });
+            }
+            else{
+                console.debug("No user session saved");
+                this.logoutCloud();
+            }
         },
+
+        checkLogin: function(callback){
+        if(!this.userId){
+            var user = getCloudLogin();
+            if(user !== null && user.id){
+                var url = pcapi.getCloudProviderUrl() + '/auth/'+pcapi.getProvider();
+                if (user.id != "local") {
+                    url += '/'+user.id;
+                }
+
+                console.debug("Check user with: " + url);
+                $.ajax({
+                    type: 'GET',
+                    dataType: 'json',
+                    url: url,
+                    cache: false,
+                    success: $.proxy(function(data){
+                        if(data.state === 1){
+                            this.setCloudLogin(user.id, user.cursor);
+                        }
+
+                        callback(user.id);
+                    }, this),
+                    error: $.proxy(function(error){
+                        console.error("Error with user: " + url + " : " + error.msg);
+                        this.logoutCloud();
+                    }, this)
+                });
+            }
+            else{
+                console.debug("No user session saved");
+                this.logoutCloud();
+            }
+        }
+        else{
+            callback(this.userId);
+        }
+    },
 
         /**
          * Delete a record|editor on the cloud
@@ -237,6 +347,41 @@ var pcapi = function() {
          */
         getCloudProviderUrl: function() {
             return this.cloudProviderUrl;
+        },
+
+        /**
+         * Get the cloud login from local storage.
+         */
+        getCloudLogin: function(){
+            var login = null;
+            var user = localStorage.getItem('cloud-user');
+            if(user){
+                login = JSON.parse(user);
+            }
+
+            return login;
+        },
+
+        /**
+         * Get the cloud login id from local storage.
+         */
+        getCloudLoginId: function(){
+            var id;
+            var login = this.getCloudLogin();
+            if(login){
+                id = login.id;
+                if(id === 'local'){
+                    id = "";
+                }
+            }
+            return id;
+        },
+
+        /**
+         * Unset user login id.
+         */
+        clearCloudLogin: function(){
+            localStorage.setItem('cloud-user', JSON.stringify({'id': undefined}));
         },
 
         /**
@@ -397,14 +542,19 @@ var pcapi = function() {
          * @returns the userId for PCAPI
          */
         getUserId: function(){
-            return this.userId;
+            //TO-DO check headers of request
+            var id = this.getCloudLoginId();
+            if (id != "") {
+                id = "/"+id;
+            }
+            return id;
         },
 
         /**
          * Login to cloud provider asynchronously
          */
-        loginAsyncCloud: function(cb, cbrowser){
-            doLogin(cb, cbrowser);
+        loginAsyncCloud: function(provider, cb, cbrowser){
+            doLogin(provider, cb, cbrowser);
         },
 
         /**
@@ -417,6 +567,13 @@ var pcapi = function() {
                     $(location).attr('href',data.url);
                 });
             }
+        },
+
+        /**
+         * Logout from cloud provider.
+         */
+        logoutCloud: function(){
+            this.clearCloudLogin();
         },
 
         /**
@@ -460,6 +617,19 @@ var pcapi = function() {
                     callback(false);
                 }
             });
+        },
+
+        /**
+         * Store cloud user id in local storage.
+         */
+        setCloudLogin: function(userId, cursor){
+            this.user = {
+                'id': userId,
+                'cursor': cursor
+            };
+            console.log(this.user)
+
+            localStorage.setItem('cloud-user', JSON.stringify(this.user));
         },
 
         /**
