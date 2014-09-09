@@ -1,0 +1,15 @@
+{
+  "name": "pcapi",
+  "version": "0.0.1",
+  "homepage": "https://github.com/edina/pcapi.js",
+  "authors": [
+    "Panos Terzis <P.Terzis@ed.ac.uk>"
+  ],
+  "description": "A javascript library for PCAPI",
+  "main": "js/pcapi.js",
+  "keywords": [
+    "PCAPI"
+  ],
+  "license": "BSD",
+  "private": false
+}
