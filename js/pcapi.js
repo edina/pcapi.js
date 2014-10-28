@@ -31,7 +31,7 @@ DAMAGE.
 
 "use strict";
 
-var pcapi = function(config){
+var pcapi = (function(config){
 
     /**
      * Unset user login id.
@@ -777,4 +777,4 @@ var pcapi = function(config){
     };
 
     return _this;
-};
+})();
