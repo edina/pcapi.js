@@ -31,24 +31,13 @@ DAMAGE.
 
 "use strict";
 
-var pcapi = function(){
+var pcapi = function(config){
 
-    var buildUrl = function(remoteDir, item){
-        var userId = _this.getCloudLoginId();
-        if (userId !== "") {
-            userId = "/"+userId;
-        }
-        return _this.getCloudProviderUrl() + '/'+remoteDir+'/' +
-                _this.getProvider() + userId +'/'+item;
-    };
-
-    var buildFSUrl = function(remoteDir, item){
-        var userId = _this.getCloudLoginId();
-        if (userId != "") {
-            userId = "/"+userId;
-        }
-        return _this.getCloudProviderUrl() + '/fs/' +
-                _this.getProvider() + userId +'/'+remoteDir+'/'+item;
+    /**
+     * Unset user login id.
+     */
+    var clearCloudLogin = function(){
+        localStorage.setItem('cloud-user', JSON.stringify({'id': undefined}));
     };
 
     /**
@@ -73,8 +62,11 @@ var pcapi = function(){
      * @param loginUrl
      */
     var doLoginLocal = function(callback, cbrowser, loginUrl){
-        var pollTimer, pollTimerCount = 0, pollInterval = 3000, pollForMax = 5 * 60 * 1000; //min
-        var pollUrl = loginUrl + '?async=true';
+        var pollTimer,
+            pollTimerCount = 0,
+            pollInterval = 3000,
+            pollForMax = 5 * 60 * 1000; //min
+        var pollUrl = loginUrl;
         console.debug('Login with: ' + pollUrl);
         var cb = window.open(pollUrl, '_blank', 'location=no');
 
@@ -93,20 +85,23 @@ var pcapi = function(){
                 success: function(pollData){
                     pollTimerCount += pollInterval;
 
-                    if(pollData.state === 1 || pollTimerCount > pollForMax){
-                        var cloudUserId = "local";
-                        if(pollData.state === 1 ){
-                            _this.setCloudLogin(cloudUserId);
-                        }
-                        cb.close();
-                        closeCb("local");
+                    // Ignore html responses (like the redirection from Shibboleth)
+                    if(typeof(pollData) === 'object'){
+                      if(pollData.state === 1 || pollTimerCount > pollForMax){
+                          var cloudUserId;
+                          if(pollData.state === 1 ){
+                              cloudUserId = pollData.userid;
+                              _this.setCloudLogin(cloudUserId);
+                          }
+                          cb.close();
+                          closeCb(cloudUserId);
+                      }
                     }
                 },
                 error: function(error){
                     console.error("Problem polling api: " + error.statusText);
-                    closeCb (-1);
+                    closeCb();
                 },
-                cache: false
             });
         }, pollInterval);
 
@@ -171,7 +166,7 @@ var pcapi = function(){
                         },
                         error: function(error){
                             console.error("Problem polling api: " + error.statusText);
-                            closeCb(-1);
+                            closeCb({"status": -1, "msg": "Problem polling api"});
                         },
                         cache: false
                     });
@@ -194,9 +189,36 @@ var pcapi = function(){
                     msg = "Problem with login: " + textStatus;
                 }
 
+                callback({"status": -1, "msg": msg});
                 console.error(msg);
             }
         });
+    };
+
+    /**
+     * Get the cloud login from local storage.
+     */
+    var getCloudLogin = function(){
+        var login = null;
+        var user = localStorage.getItem('cloud-user');
+        if(user){
+            login = JSON.parse(user);
+        }
+
+        return login;
+    };
+
+    /**
+     * Get the cloud login id from local storage.
+     */
+    var getCloudLoginId = function(){
+        var id;
+        var login = getCloudLogin();
+        if(typeof(login) === 'object'){
+            id = login.id;
+        }
+
+        return id;
     };
 
     /**
@@ -217,83 +239,92 @@ var pcapi = function(){
          * @param options.version version number of PCAPI
          */
         init: function(options){
+            this.baseUrl = options.url;
+            this.version = options.version;
             this.cloudProviderUrl = options.url + "/" + options.version + "/pcapi";
         },
 
         /**
-         * Check if the user is logged in
-         * @param token the token that comes form auth
-         * @param callback function after checking the login status
+         * function for building the main urls
+         * <domain>/<version>/pcapi/<records/editors>/<provider>/<userid>/...
+         * @param remoteDir the remote dir which is either records or editors
+         * @item the folder/file inside the records/editors folder
+         * @returns url
          */
-        checkIfLoggedIn: function(token, callback){
-            console.log("check if user is logged in");
-            var user = this.getCloudLogin();
-            if(user !== null && user.id){
-                var url = pcapi.getCloudProviderUrl() + '/auth/'+this.getProvider();
-                if (user.id != "local") {
-                    url += '/'+user.id;
-                }
-
-                console.debug("Check user with: " + url);
-                $.ajax({
-                    url: url,
-                    type: "GET",
-                    dataType: 'json',
-                    cache: false,
-                    success: $.proxy(function(response){
-                        if(data.state === 1){
-                            this.setCloudLogin(user.id, user.cursor);
-                        }
-                        callback(true, response);
-                    }, this),
-                    error: function(jqXHR, status, error){
-                        callback(false, error);
-                    }
-                });
-            }
-            else{
-                console.debug("No user session saved");
-                this.logoutCloud();
-            }
+        buildUrl : function(remoteDir, item){
+            var userId = getCloudLoginId();
+            return this.buildUserUrl(userId, remoteDir, item);
         },
 
-        checkLogin: function(callback){
-        if(!this.userId){
-            var user = getCloudLogin();
-            if(user !== null && user.id){
-                var url = pcapi.getCloudProviderUrl() + '/auth/'+pcapi.getProvider();
-                if (user.id != "local") {
-                    url += '/'+user.id;
-                }
 
-                console.debug("Check user with: " + url);
-                $.ajax({
-                    type: 'GET',
-                    dataType: 'json',
-                    url: url,
-                    cache: false,
-                    success: $.proxy(function(data){
-                        if(data.state === 1){
-                            this.setCloudLogin(user.id, user.cursor);
-                        }
+        buildUserUrl: function(userId, category, path){
+            path = path || '';
 
-                        callback(user.id);
-                    }, this),
-                    error: $.proxy(function(error){
-                        console.error("Error with user: " + url + " : " + error.msg);
-                        this.logoutCloud();
-                    }, this)
-                });
+            return this.getCloudProviderUrl() + '/' + category + '/' +
+                   this.getProvider() + '/' + userId + '/' + path;
+        },
+
+        /**
+         * function for building the main urls
+         * <domain>/<version>/pcapi/fs/<provider>/<userid>/<folder>/
+         * @param remoteDir the remote dir
+         * @item the folder/file inside the remoteDir folder
+         * @returns url
+         */
+        buildFSUrl : function(remoteDir, item){
+            var userId = getCloudLoginId();
+            if (userId === "local") {
+                userId = "";
             }
             else{
-                console.debug("No user session saved");
-                this.logoutCloud();
+                userId = "/"+userId;
             }
-        }
-        else{
-            callback(this.userId);
-        }
-    },
+            return this.getCloudProviderUrl() + '/fs/' +
+                this.getProvider() + userId +'/'+remoteDir+'/'+item;
+        },
+
+        /**
+         * Check if the user is logged in
+         * @param callback function after checking the login status
+         */
+        checkLogin: function(callback){
+            if(!this.userId){
+                console.log("check if user is logged in");
+                var user = getCloudLogin();
+                if(user !== null && user.id){
+                    var url = this.getCloudProviderUrl() + '/auth/'+this.getProvider();
+                    if (user.id !== "local") {
+                        url += '/'+user.id;
+                    }
+
+                    console.debug("Check user with: " + url);
+                    $.ajax({
+                        url: url,
+                        type: "GET",
+                        dataType: 'json',
+                        cache: false,
+                        success: $.proxy(function(data){
+
+                            if(data.state === 1){
+                                this.setCloudLogin(user.id, user.cursor);
+                            }
+
+                            callback(true, data);
+                        }, this),
+                        error: function(jqXHR, status, error){
+                            callback(false, error);
+                        }
+                    });
+                }
+                else{
+                    console.debug("No user session saved");
+                    this.logoutCloud();
+                }
+            }
+            else{
+                callback(this.userId);
+            }
+        },
 
         /**
          * Delete a record|editor on the cloud
@@ -302,7 +333,7 @@ var pcapi = function(){
          * @param callback function after fetching the items
          */
         deleteItem: function(remoteDir, item, callback){
-            var url = buildUrl(remoteDir, "");
+            var url = this.buildUrl(remoteDir, "");
 
             console.debug("Delete item from "+remoteDir+" with " + url);
             if(remoteDir === "records"){
@@ -332,6 +363,11 @@ var pcapi = function(){
             });
         },
 
+
+        getAnonymousUserId: function(){
+          return config.pcapianonymous || null;
+        },
+
         /**
          * function for getting the assets urls
          * @param callback function
@@ -339,7 +375,7 @@ var pcapi = function(){
         getAssets: function(callback){
             this.getItems("records", "assets/images", {"frmt": "url"}, function(success, data){
                 callback(success, data);
-            })
+            });
         },
 
         /**
@@ -350,47 +386,12 @@ var pcapi = function(){
         },
 
         /**
-         * Get the cloud login from local storage.
-         */
-        getCloudLogin: function(){
-            var login = null;
-            var user = localStorage.getItem('cloud-user');
-            if(user){
-                login = JSON.parse(user);
-            }
-
-            return login;
-        },
-
-        /**
-         * Get the cloud login id from local storage.
-         */
-        getCloudLoginId: function(){
-            var id;
-            var login = this.getCloudLogin();
-            if(login){
-                id = login.id;
-                if(id === 'local'){
-                    id = "";
-                }
-            }
-            return id;
-        },
-
-        /**
-         * Unset user login id.
-         */
-        clearCloudLogin: function(){
-            localStorage.setItem('cloud-user', JSON.stringify({'id': undefined}));
-        },
-
-        /**
          * Fetch all the items on the cloud
          * @param remoteDir remote directory
          * @param callback function after fetching the items
          */
         getFSItems: function(remoteDir, callback){
-            var url = buildFSUrl(remoteDir, "");
+            var url = this.buildFSUrl(remoteDir, "");
 
             console.debug("Get items of "+remoteDir+" with " + url);
 
@@ -416,23 +417,24 @@ var pcapi = function(){
         },
 
         /**
-         * Fetch all the records|editors on the cloud
-         * @param remoteDir remote directory [records|editors]
-         * @param item get a file from PCAPI
-         * @param dataType of the item (json, html, txt)
+         * Fetch an item on the cloud
+         * @param options.remoteDir remote directory
+         * @param options.item the file
          * @param callback function after fetching the items
          */
-        getItem: function(remoteDir, item, dataType, callback){
-            var url = buildUrl(remoteDir, item);
+        getFSItem: function(options, callback){
+            var url = this.buildFSUrl(options.remoteDir, options.item);
+            if(options.userId){
+                url = this.buildUserUrl(options.userId, options.remoteDir, options.item);
+            }
 
-            console.debug("Get item "+item+" of "+remoteDir+" with " + url + " and dataType " + dataType);
+            console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + url);
 
             $.ajax({
                 type: "GET",
-                dataType: dataType,
+                dataType: "json",
                 url: url,
                 success: function(data){
-                    console.log(data)
                     if(data.error == 1){
                         callback(false);
                     }
@@ -451,29 +453,62 @@ var pcapi = function(){
 
         /**
          * Fetch all the records|editors on the cloud
-         * @param remoteDir remote directory [records|editors]
-         * @param extra path for url
+         * @param options.remoteDir remote directory [records|editors]
+         * @param options.item get a file from PCAPI
+         * @param options.dataType of the item (json, html, txt)
          * @param callback function after fetching the items
          */
-        getItems: function(remoteDir, extras, filters, callback){
-            var url = buildUrl(remoteDir, extras);
+        getItem: function(options, callback){
+            var url = this.buildUrl(options.remoteDir, options.item);
 
-            console.debug("Get items of "+remoteDir+" with " + url);
+            console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + url + " and dataType " + options.dataType);
+
+            $.ajax({
+                type: "GET",
+                dataType: options.dataType,
+                url: url,
+                success: function(data){
+                    if(data.error == 1){
+                        callback(false);
+                    }
+                    else{
+                        callback(true, data);
+                    }
+                },
+                error: function(jqXHR, status, error){
+                    console.error("Problem with " + url + " : status=" +
+                                  status + " : " + error);
+                    callback(false);
+                },
+                cache: false
+            });
+        },
+
+        /**
+         * Fetch all the records|editors on the cloud
+         * @param options.remoteDir remote directory [records|editors]
+         * @param options.extras path for url
+         * @pamam options.filters filter for records
+         * @param callback function after fetching the items
+         */
+        getItems: function(options, callback){
+            var url = this.buildUrl(options.remoteDir, options.extras);
+
+            console.debug("Get items of "+options.remoteDir+" with " + url);
             //if it's undefined make it empty object in order not to break it
-            if(filters === undefined){
-                filters = {};
+            if(options.filters === undefined){
+                options.filters = {};
             }
             else{
-                console.log(filters);
+                console.log(options.filters);
             }
 
             $.ajax({
                 type: "GET",
                 dataType: "json",
                 url: url,
-                data: filters,
+                data: options.filters,
                 success: function(data){
-                    console.log(data);
                     if(data.error == 1){
                         callback(false);
                     }
@@ -490,24 +525,29 @@ var pcapi = function(){
             });
         },
 
+        /**
+         * function for getting the parameters of the url. It's needed
+         * for the synchronous login.
+         * @returns object with key, values of the url parameters
+         */
         getParameters: function (){
             var query = window.location.search.substring(1);
-            var query_string = {};
+            var queryString = {};
             var params = query.split("&");
             for(var i=0; i<params.length; i++){
                 var pair = params[i].split("=");
-                if (typeof query_string[pair[0]] === "undefined") {
-                    query_string[pair[0]] = pair[1];
+                if (typeof queryString[pair[0]] === "undefined") {
+                    queryString[pair[0]] = pair[1];
                     // If second entry with this name
-                } else if (typeof query_string[pair[0]] === "string") {
-                    var arr = [ query_string[pair[0]], pair[1] ];
-                    query_string[pair[0]] = arr;
+                } else if (typeof queryString[pair[0]] === "string") {
+                    var arr = [ queryString[pair[0]], pair[1] ];
+                    queryString[pair[0]] = arr;
                     // If third or later entry with this name
                 } else {
-                    query_string[pair[0]].push(pair[1]);
+                    queryString[pair[0]].push(pair[1]);
                 }
             }
-            return query_string;
+            return queryString;
         },
 
         /**
@@ -534,7 +574,16 @@ var pcapi = function(){
          * @returns the provider from
          */
         getProvider: function(){
-            return localStorage.getItem('cloud-provider');
+            return localStorage.getItem('cloud-provider') || 'local';
+        },
+
+        /**
+         * @return The cloud login user.
+         *   id - cloud user id
+         *   cursor - cursor of last sync.
+         */
+        getUser: function(){
+            return this.user;
         },
 
         /**
@@ -542,11 +591,7 @@ var pcapi = function(){
          * @returns the userId for PCAPI
          */
         getUserId: function(){
-            //TO-DO check headers of request
-            var id = this.getCloudLoginId();
-            if (id != "") {
-                id = "/"+id;
-            }
+            var id = getCloudLoginId();
             return id;
         },
 
@@ -562,7 +607,7 @@ var pcapi = function(){
          */
         loginCloud: function(){
             if(!("uid" in this.getParameters())){
-                var loginUrl = this.getCloudProviderUrl() + '/auth/'+this.getProvider()+"?callback="+$(location).attr('href');;
+                var loginUrl = this.getCloudProviderUrl() + '/auth/'+this.getProvider()+"?callback="+$(location).attr('href');
                 $.getJSON(loginUrl, function(data) {
                     $(location).attr('href',data.url);
                 });
@@ -573,7 +618,7 @@ var pcapi = function(){
          * Logout from cloud provider.
          */
         logoutCloud: function(){
-            this.clearCloudLogin();
+            clearCloudLogin();
         },
 
         /**
@@ -582,33 +627,33 @@ var pcapi = function(){
          * @param item, could be either editor or record
          * @param callback function after fetching the items
          */
-        saveItem: function(remoteDir, item, callback){
+        saveItem: function(userId, remoteDir, item, callback){
 
-            var url = buildUrl(remoteDir, "");
-
-            console.debug("Post item to "+remoteDir+" with " + url);
-            var data;
+            var url, data;
             if(remoteDir === "records"){
                 data = JSON.stringify(item, undefined, 2);
-                url = url+encodeURIComponent(item.name);
+                url = this.buildUserUrl(userId, remoteDir, item.name);
             }
             else if(remoteDir === "editors"){
                 data = item.editor.join("");
-                url = url+encodeURIComponent(item.name)+".edtr";
-                console.log(data)
+                url = this.buildUserUrl(userId, remoteDir, item.name+".edtr");
             }
+
+            console.debug("Post item to "+remoteDir+" with " + url);
 
             $.ajax({
                 type: "POST",
                 data: data,
+                dataType: "json",
                 cache: false,
                 url: url,
-                success: function(data){
-                    if(data.error == 1){
-                        callback(false);
+                success: function(res){
+                    if(res.error === 0){
+                      callback(true, res);
                     }
                     else{
-                        callback(true, data);
+                      console.debug(res.msg);
+                      callback(false);
                     }
                 },
                 error: function(jqXHR, status, error){
@@ -627,9 +672,16 @@ var pcapi = function(){
                 'id': userId,
                 'cursor': cursor
             };
-            console.log(this.user)
 
             localStorage.setItem('cloud-user', JSON.stringify(this.user));
+        },
+
+        /**
+         * Set the cloud provider URL.
+         * @param root The Server URL root.
+         */
+        setCloudProviderUrl: function(url){
+            this.cloudProviderUrl = url + "/" + this.version + "/pcapi";
         },
 
         /**
@@ -651,24 +703,24 @@ var pcapi = function(){
 
         /**
          * Update a record|editor on the cloud
-         * @param remoteDir remote directory [records|editors]
-         * @param item, could be either editor or record
-         * @param for records we need to know which specific file to update
+         * @param options.remoteDir remote directory [records|editors]
+         * @param options.item, could be either editor or record
+         * @param options.file for records we need to know which specific file to update
          * @param callback function after fetching the items
          */
-        updateItem: function(remoteDir, item, file, callback){
+        updateItem: function(options, callback){
 
-            var url = buildUrl(remoteDir, "");
+            var url = this.buildUrl(options.remoteDir, "");
 
-            console.debug("PUT item to "+remoteDir+" with " + url);
+            console.debug("PUT item to "+options.remoteDir+" with " + url);
             var data;
-            if(remoteDir === "records"){
-                data = JSON.stringify(item, undefined, 2);
-                url = url+item.name+"/"+file;
+            if(options.remoteDir === "records"){
+                data = JSON.stringify(options.item, undefined, 2);
+                url = url + options.item.name+"/" + options.file;
             }
-            else if(remoteDir === "editors"){
-                data = item.editor;
-                url = url+item.name+".edtr";
+            else if(options.remoteDir === "editors"){
+                data = options.item.editor;
+                url = url + options.item.name+".edtr";
             }
 
             $.ajax({
@@ -694,24 +746,23 @@ var pcapi = function(){
 
         /**
          * function for uploading a file
-         * @param remoteDir
-         * @param file
+         * @param options.remoteDir
+         * @param options.filename
+         * @param options.file
          */
-        uploadFile: function(remoteDir, filename, file, callback){
+        uploadFile: function(options, callback){
 
-            var url = buildFSUrl(remoteDir, filename);
+            var url = this.buildFSUrl(options.remoteDir, options.filename);
 
-            console.debug("Upload item "+file.name+" to "+remoteDir+" with " + url);
+            console.debug("Upload item "+options.file.name+" to "+options.remoteDir+" with " + url);
 
             $.ajax({
                 type: "POST",
                 beforeSend: function(request) {
-                    request.setRequestHeader("X-Parse-Application-Id", 'MY-APP-ID');
-                    request.setRequestHeader("X-Parse-REST-API-Key", 'MY-REST-API-ID');
-                    request.setRequestHeader("Content-Type", file.type);
+                    request.setRequestHeader("Content-Type", options.file.type);
                 },
                 url: url,
-                data: file,
+                data: options.file,
                 processData: false,
                 contentType: false,
                 success: function(data) {
@@ -724,6 +775,6 @@ var pcapi = function(){
             });
         }
     };
-    
+
     return _this;
 };
