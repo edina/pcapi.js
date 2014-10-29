@@ -82,7 +82,7 @@ function preparePCAPI(){
     else{
         var token = test_pcapi.getParameters().oauth_token;
         stop();
-        test_pcapi.checkIfLoggedIn(token, function(success, data){
+        test_pcapi.checkLogin(function(success, data){
             console.log(data);
             start();
         });
@@ -100,8 +100,6 @@ test_pcapi.init(config.options[provider]);
 test_pcapi.setProvider(provider);
 //set the userid
 test_pcapi.setCloudLogin(test_pcapi.getParameters()["oauth_token"]);
-
-config.autostart = false;
 
 //UNIT TESTS
 module('Providers', {
@@ -170,15 +168,15 @@ test("Check PCAPI Login", function(assert){
     var token = test_pcapi.getParameters().oauth_token;
     assert.ok(true, "The user has a token");
     asyncTest("Is login valid?", function(assert){
-        test_pcapi.checkIfLoggedIn(token, function(success, data){
-            assert.equal(1, data.state, "The login is valid");
+        test_pcapi.checkLogin(function(userId){
+            assert.equal(userId, token, "The login is valid");
             start();
         });
     });
 });
 
 test("Check UserId", function(assert){
-    assert.equal(test_pcapi.getParameters()["oauth_token"], test_pcapi.getCloudLoginId(), "The userid is the right one");
+    assert.equal(test_pcapi.getParameters()["oauth_token"], test_pcapi.getUserId(), "The userid is the right one");
 });
 
 module("Records", {
