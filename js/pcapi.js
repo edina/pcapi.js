@@ -31,7 +31,7 @@ DAMAGE.
 
 "use strict";
 
-var pcapi = (function(config){
+var pcapi = (function(){
 
     /**
      * Unset user login id.
@@ -256,7 +256,9 @@ var pcapi = (function(config){
             return this.buildUserUrl(userId, remoteDir, item);
         },
 
-
+        /**
+         * TODO
+         */
         buildUserUrl: function(userId, category, path){
             path = path || '';
 
@@ -361,11 +363,6 @@ var pcapi = (function(config){
                     callback(false);
                 }
             });
-        },
-
-
-        getAnonymousUserId: function(){
-          return config.pcapianonymous || null;
         },
 
         /**
