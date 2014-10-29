@@ -719,7 +719,7 @@ var pcapi = (function(config){
                 url = url + options.item.name+"/" + options.file;
             }
             else if(options.remoteDir === "editors"){
-                data = options.item.editor;
+                data = options.item.editor.join("");
                 url = url + options.item.name+".edtr";
             }
 
