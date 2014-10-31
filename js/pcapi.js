@@ -366,6 +366,39 @@ var pcapi = (function(){
         },
 
         /**
+         * Export a record on the 
+         * @param options.remoteDir remote directory [records|editors]
+         * @param options.item, could be either editor or record
+         * @param callback function after fetching the items
+         */
+        exportItem: function(options, callback){
+
+            var url = this.buildUrl("export", options.item.name);
+
+            console.debug("PUT item to "+options.remoteDir+" with " + url);
+
+            $.ajax({
+                type: "POST",
+                data: data,
+                cache: false,
+                url: url,
+                success: function(data){
+                    if(data.error == 1){
+                        callback(false);
+                    }
+                    else{
+                        callback(true, data);
+                    }
+                },
+                error: function(jqXHR, status, error){
+                    console.error("Problem with " + url + " : status=" +
+                                  status + " : " + error);
+                    callback(false);
+                }
+            });
+        },
+
+        /**
          * function for getting the assets urls
          * @param callback function
          */
