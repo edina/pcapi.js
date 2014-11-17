@@ -366,7 +366,7 @@ var pcapi = (function(){
         },
 
         /**
-         * Export a record on the 
+         * Export a record on the
          * @param options.remoteDir remote directory [records|editors]
          * @param options.item, could be either editor or record
          * @param callback function after fetching the items
@@ -779,10 +779,12 @@ var pcapi = (function(){
          * @param options.remoteDir
          * @param options.filename
          * @param options.file
+         * @param options.userid
          */
         uploadFile: function(options, callback){
 
-            var url = this.buildFSUrl(options.remoteDir, options.filename);
+            var userId = options.userid || getCloudLoginId();
+            var url = this.buildUserUrl(userId, 'fs', options.remoteDir + '/' + options.filename);
 
             console.debug("Upload item "+options.file.name+" to "+options.remoteDir+" with " + url);
 
