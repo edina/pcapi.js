@@ -33,6 +33,9 @@ DAMAGE.
 
 var pcapi = (function(){
 
+    // List of reserved dirs
+    var reservedDirs = ['editors', 'layers', 'records'];
+
     /**
      * Unset user login id.
      */
@@ -251,19 +254,25 @@ var pcapi = (function(){
          * @item the folder/file inside the records/editors folder
          * @returns url
          */
-        buildUrl : function(remoteDir, item){
+        buildUrl : function(remoteDir, item, urlParams){
             var userId = getCloudLoginId();
-            return this.buildUserUrl(userId, remoteDir, item);
+            return this.buildUserUrl(userId, remoteDir, item, urlParams);
         },
 
         /**
-         * TODO
+         * Function for building an url for given user
+         * @params a dictionary with extra parameters to add to the url
          */
-        buildUserUrl: function(userId, category, path){
+        buildUserUrl: function(userId, category, path, urlParams){
+            var params;
             path = path || '';
+            params = this.objectToURL(urlParams);
+            if(params.length > 0){
+              params = '?' + params;
+            }
 
             return this.getCloudProviderUrl() + '/' + category + '/' +
-                   this.getProvider() + '/' + userId + '/' + path;
+                   this.getProvider() + '/' + userId + '/' + path + params;
         },
 
         /**
@@ -651,25 +660,43 @@ var pcapi = (function(){
             clearCloudLogin();
         },
 
+        /*
+         * Encode a dictionary as url parameters
+         * @param obj a key/value object
+         * @return an string of the form key1=value1&key2=value2
+         */
+        objectToURL: function(obj){
+          var params = [];
+          if(typeof(obj) === 'object'){
+            for(var key in obj){
+              if(obj.hasOwnProperty(key)){
+                params.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+              }
+            }
+          }
+          return params.join("&");
+        },
+
         /**
          * Post a record|editor on the cloud
-         * @param remoteDir remote directory [records|editors]
-         * @param item, could be either editor or record
-         * @param callback function after fetching the items
+         * @param options.remoteDir remote directory [records|editors]
+         * @param options.item, could be either editor or record
+         * @param options.callback function after fetching the items
+         * @param options.userId
+         * @param options.urlParams Additional parameter for the url
          */
-        saveItem: function(userId, remoteDir, item, callback){
-
+        saveItem: function(options, callback){
             var url, data;
-            if(remoteDir === "records"){
-                data = JSON.stringify(item, undefined, 2);
-                url = this.buildUserUrl(userId, remoteDir, item.name);
+            if(options.remoteDir === "records"){
+                data = JSON.stringify(options.item, undefined, 2);
+                url = this.buildUserUrl(options.userId, options.remoteDir, options.item.name, options.urlParams);
             }
-            else if(remoteDir === "editors"){
-                data = item.editor.join("");
-                url = this.buildUserUrl(userId, remoteDir, item.name+".edtr");
+            else if(options.remoteDir === "editors"){
+                data = options.item.editor.join("");
+                url = this.buildUserUrl(options.userId, options.remoteDir, options.item.name+".edtr", options.urlParams);
             }
 
-            console.debug("Post item to "+remoteDir+" with " + url);
+            console.debug("Post item to "+options.remoteDir+" with " + url);
 
             $.ajax({
                 type: "POST",
@@ -683,13 +710,13 @@ var pcapi = (function(){
                     }
                     else{
                       console.debug(res.msg);
-                      callback(false);
+                      callback(false, res);
                     }
                 },
                 error: function(jqXHR, status, error){
                     console.error("Problem with " + url + " : status=" +
                                   status + " : " + error);
-                    callback(false);
+                    callback(false, {msg: status});
                 }
             });
         },
@@ -780,11 +807,17 @@ var pcapi = (function(){
          * @param options.filename
          * @param options.file
          * @param options.userid
+         * @param options.urlParams Additional parameter for the url
          */
         uploadFile: function(options, callback){
-
+            var url;
             var userId = options.userid || getCloudLoginId();
-            var url = this.buildUserUrl(userId, 'fs', options.remoteDir + '/' + options.filename);
+
+            if(reservedDirs.indexOf(options.remoteDir) > -1){
+              url = this.buildUserUrl(userId, options.remoteDir, options.filename, options.urlParams);
+            }else{
+              url = this.buildUserUrl(userId, 'fs', options.remoteDir + '/' + options.filename, options.urlParams);
+            }
 
             console.debug("Upload item "+options.file.name+" to "+options.remoteDir+" with " + url);
 
