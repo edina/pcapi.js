@@ -814,9 +814,9 @@ var pcapi = (function(){
             var userId = options.userid || getCloudLoginId();
 
             if(reservedDirs.indexOf(options.remoteDir) > -1){
-              url = this.buildUserUrl(userId, options.remoteDir, options.filename, options.urlParams);
+                url = this.buildUserUrl(userId, options.remoteDir, options.filename, options.urlParams);
             }else{
-              url = this.buildUserUrl(userId, 'fs', options.remoteDir + '/' + options.filename, options.urlParams);
+                url = this.buildUserUrl(userId, 'fs', options.remoteDir + '/' + options.filename, options.urlParams);
             }
 
             console.debug("Upload item "+options.file.name+" to "+options.remoteDir+" with " + url);
@@ -843,3 +843,25 @@ var pcapi = (function(){
 
     return _this;
 })();
+
+if ( typeof module === "object" && typeof module.exports === "object" ) {
+    // Expose pcapi as module.exports in loaders that implement the Node
+    // module pattern (including browserify). Do not create the global, since
+    // the user will be storing it themselves locally, and globals are frowned
+    // upon in the Node module world.
+    module.exports =  pcapi;
+}
+else {
+    // Register as a named AMD module
+    if ( typeof define === "function" && define.amd ) {
+        //define( "pcapi", [], function () { console.log('yyyy'); return pcapi; } );
+        define( ["pcapi"], function() {
+            return pcapi;
+        });
+    }
+}
+
+// If there is a window object, that at least has a document property,
+if ( typeof window === "object" && typeof window.document === "object" ) {
+    window.pcapi = pcapi;
+}
