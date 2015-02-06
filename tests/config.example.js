@@ -37,7 +37,9 @@ var config = {
         'pass': '<password>'
     },
     options: {
-        'url': '<PCAPI url>',
-        'version': '<version number>'
+        '<provider>': {
+            'url': '<PCAPI url>',
+            'version': '<version number>'
+        }
     }
 };

@@ -1,5 +1,5 @@
 {
-    "name": "pcapi.js",
+    "name": "pcapi",
     "version": "0.0.3",
     "description": "A javascript API for PCAPI",
     "scripts": {
@@ -14,14 +14,26 @@
     "license": "BSD",
     "preferGlobal": true,
     "devDependencies": {
+        "gulp": "~3.8.10",
+        "gulp-mocha-phantomjs": "0.5.3",
+        "gulp-jshint": "1.9.2",
+        "gulp-uglify": "1.1.0",
+        "gulp-clean": "0.3.1",
+        "gulp-concat": "2.4.3",
+        "gulp-rename": "1.2.0",
+        "gulp-bump": "0.1.13",
+        "gulp-git": "0.5.6",
         "uglify-js": "latest",
-        "clean-css": "2.0.2",
-        "bower": "1.2.8",
         "jshint": "2.5.3",
-        "qunit": "0.7.2",
-        "qunit-cli": "0.1.4"
+        "mocha": "2.1.0",
+        "chai": "1.10.0",
+        "phantomjs": "1.9.15",
+        "sinon": "1.12.2",
+        "chai-as-promised": "4.1.1",
+        "mocha-phantomjs": "3.5.3",
+        "promise-polyfill": "2.0.0"
     },
     "engines": {
-        "node": ">=0.8.0"
+        "node": ">=0.10"
     }
 }
