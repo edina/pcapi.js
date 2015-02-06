@@ -709,6 +709,23 @@ var pcapi = (function(){
             clearCloudLogin();
         },
 
+        /*
+         * Encode a dictionary as url parameters
+         * @param obj a key/value object
+         * @return an string of the form key1=value1&key2=value2
+         */
+        objectToURL: function(obj){
+          var params = [];
+          if(typeof(obj) === 'object'){
+            for(var key in obj){
+              if(obj.hasOwnProperty(key)){
+                params.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+              }
+            }
+          }
+          return params.join("&");
+        },
+
         /**
          * Post a record|editor on the cloud
          * @param {String} options.remoteDir remote directory [records|editors]
@@ -836,11 +853,15 @@ var pcapi = (function(){
          * @param options.path
          * @param options.file
          * @param options.userid
+         * @param options.urlParams Additional parameter for the url
          */
         uploadFile: function(options){
 
             var userId = options.userid || getCloudLoginId();
-            var url = this.buildUserUrl(userId, 'fs', options.remoteDir + '/' + options.path);
+            var url = this.buildFSUserUrl(userId, options.remoteDir, options.path);
+            if(reservedDirs.indexOf(options.remoteDir) > -1){
+                url = this.buildUserUrl(userId, options.remoteDir, options.path, options.urlParams);
+            }
 
             console.debug("Upload item "+options.file.name+" to "+options.remoteDir+" with " + url);
             var formData = new FormData();
@@ -856,26 +877,30 @@ var pcapi = (function(){
                                   status + " : " + error));
                 });
             });
-        
-            //$.ajax({
-            //    type: "POST",
-            //    beforeSend: function(request) {
-            //        request.setRequestHeader("Content-Type", options.file.type);
-            //    },
-            //    url: url,
-            //    data: options.file,
-            //    processData: false,
-            //    contentType: false,
-            //    success: function(data) {
-            //        callback(true, data);
-            //    },
-            //    error: function(data) {
-            //        var obj = jQuery.parseJSON(data);
-            //        callback(false, obj.error);
-            //    }
-            //});
         }
     };
 
     return _this;
 })();
+
+if ( typeof module === "object" && typeof module.exports === "object" ) {
+    // Expose pcapi as module.exports in loaders that implement the Node
+    // module pattern (including browserify). Do not create the global, since
+    // the user will be storing it themselves locally, and globals are frowned
+    // upon in the Node module world.
+    module.exports =  pcapi;
+}
+else {
+    // Register as a named AMD module
+    if ( typeof define === "function" && define.amd ) {
+        //define( "pcapi", [], function () { console.log('yyyy'); return pcapi; } );
+        define( ["pcapi"], function() {
+            return pcapi;
+        });
+    }
+}
+
+// If there is a window object, that at least has a document property,
+if ( typeof window === "object" && typeof window.document === "object" ) {
+    window.pcapi = pcapi;
+}
