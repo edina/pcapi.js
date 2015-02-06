@@ -45,7 +45,7 @@ gulp.task('test', ['jshint'], function () {
         .pipe(mochaPhantomJS());
 });
 
-gulp.task('bump', function () {
+gulp.task('bump', ['build'], function () {
     return gulp.src(['./package.json', './bower.json'])
         .pipe(bump())
         .pipe(gulp.dest('./'));
