@@ -568,7 +568,7 @@ var pcapi = (function(){
             console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + url);
 
             return new Promise(function(resolve, reject){
-                doRequest("GET", url).then(function(result){
+                doRequest("GET", url, options.data).then(function(result){
                     if(options.remoteDir === 'records'){
                         resolve(JSON.parse(result));
                     }
@@ -715,15 +715,15 @@ var pcapi = (function(){
          * @return an string of the form key1=value1&key2=value2
          */
         objectToURL: function(obj){
-          var params = [];
-          if(typeof(obj) === 'object'){
-            for(var key in obj){
-              if(obj.hasOwnProperty(key)){
-                params.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
-              }
+            var params = [];
+            if(typeof(obj) === 'object'){
+                for(var key in obj){
+                    if(obj.hasOwnProperty(key)){
+                        params.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+                    }
+                }
             }
-          }
-          return params.join("&");
+            return params.join("&");
         },
 
         /**
@@ -806,6 +806,14 @@ var pcapi = (function(){
          */
         setUserId: function(userId){
             this.userId = userId;
+        },
+
+        /**
+         * function for setting the PCAPI version
+         * @param{String} the version number
+         */
+        setVersion: function(version){
+            this.version = version;
         },
 
         /**
