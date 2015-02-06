@@ -8,7 +8,7 @@ var config = {
             "userId": "00000000-0000-0000-0000-000000000000"
         },
         "dropbox":{
-            "url": "http://dlib-terzis.ucs.ed.ac.uk:8150",
+            "url": "http://example.com",
             "version": "1.3"
         }
     }

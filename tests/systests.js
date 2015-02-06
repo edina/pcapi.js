@@ -1,6 +1,6 @@
 "use strict"
 //chai.use(chaiAsPromised);
-assert = chai.assert;
+var assert = chai.assert;
 
 var providers = ['local', 'dropbox'];
 var testPcapi = pcapi;
