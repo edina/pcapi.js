@@ -40,9 +40,10 @@ gulp.task('jshint', function() {
 });
 
 gulp.task('test', ['jshint'], function () {
+    timestamp = new Date().toJSON().toString();
     return gulp
         .src('tests/index.html')
-        .pipe(mochaPhantomJS());
+        .pipe(mochaPhantomJS({reporter: 'xunit', dump:'TEST-pcapijs-'+timestamp+'.xml'}));
 });
 
 gulp.task('bump', ['build'], function () {
