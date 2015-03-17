@@ -783,7 +783,6 @@ if ( typeof module === "object" && typeof module.exports === "object" ) {
 else {
     // Register as a named AMD module
     if ( typeof define === "function" && define.amd ) {
-        //define( "pcapi", [], function () { console.log('yyyy'); return pcapi; } );
         define( ["pcapi"], function() {
             return pcapi;
         });
