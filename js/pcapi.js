@@ -214,6 +214,7 @@ var pcapi = (function(){
                     deferred.resolve(JSON.parse(data));
                 } catch(e){
                     console.error(e);
+                    deferred.reject(e);
                 }
             }
         }).fail(function(error){
