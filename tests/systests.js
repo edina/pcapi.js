@@ -7,19 +7,27 @@ var testPcapi = pcapi;
 var finished = false;
 
 //initialize pcpapi with local provider
-testPcapi.init(config.options[providers[0]]);
+var options = config.options[0];
+testPcapi.init(options);
 //set the provider
-testPcapi.setProvider(providers[0]);
+testPcapi.setProvider(options.provider);
 //set the userid
-testPcapi.setCloudLogin(config.options[providers[0]]["userId"]);
-
+testPcapi.setCloudLogin(options.userId);
 
 //providers
-describe('#checkProviders', function(){
+describe('#checkProviders', function(done){
     //get all providers
     it('check for the providers', function(done){
-        expect(testPcapi.getProviders()).to.eventually.have.keys(providers);
-        done();
+
+        testPcapi.getProviders().done(function(data){
+            try {
+                expect(data).to.have.keys(providers[0], providers[1]);
+                done();
+            } catch(e){
+                console.log(e)
+                done(e);
+            }
+        });
     });
 
     //get the selected provider
@@ -33,7 +41,7 @@ describe('#checkProviders', function(){
 describe('#User functions', function(){
     //getuserid
     it('get user id', function(done) {
-        expect(testPcapi.getUserId()).to.equal(config.options[providers[0]]["userId"]);
+        expect(testPcapi.getUserId()).to.equal(config.options[0].userId);
         done();
     });
 });
@@ -43,42 +51,42 @@ describe('#User functions', function(){
 describe('#URLS', function(){
     //base url
     it('base url check', function(done){
-        var url = "http://cobwebsvc.edina.ac.uk";
+        var url = config.options[0].url;
         assert.equal(testPcapi.getBaseUrl(), url);
         done();
     });
 
     //cloud provider url
     it('cloud provider url check', function(done){
-        var url = "http://cobwebsvc.edina.ac.uk/1.3/pcapi";
+        var url = config.options[0].url+"/1.3/pcapi";
         assert.equal(testPcapi.getCloudProviderUrl(), url);
         done();
     });
 
     //buildURL
     it('buildURL, works for editors, records', function(done){
-        var url = "http://cobwebsvc.edina.ac.uk/1.3/pcapi/records/local/00000000-0000-0000-0000-000000000000/Text (20-08-2014 16h18m18s)";
+        var url = config.options[0].url+"/1.3/pcapi/records/local/00000000-0000-0000-0000-000000000000/Text (20-08-2014 16h18m18s)";
         assert.equal(testPcapi.buildUrl("records", record1.name), url);
         done();
     });
 
     //buildUserUrl
     it('buildUserURL, works for editors, records', function(done){
-        var url = "http://cobwebsvc.edina.ac.uk/1.3/pcapi/records/local/xxxxxx/Text (20-08-2014 16h18m18s)";
+        var url = config.options[0].url+"/1.3/pcapi/records/local/xxxxxx/Text (20-08-2014 16h18m18s)";
         assert.equal(testPcapi.buildUserUrl("xxxxxx", "records", record1.name), url);
         done();
     });
 
     //buildFSUrl
     it('buildFSURL, works for any folder', function(done){
-        var url = "http://cobwebsvc.edina.ac.uk/1.3/pcapi/fs/local/00000000-0000-0000-0000-000000000000/records/Text (20-08-2014 16h18m18s)";
+        var url = config.options[0].url+"/1.3/pcapi/fs/local/00000000-0000-0000-0000-000000000000/records/Text (20-08-2014 16h18m18s)";
         assert.equal(testPcapi.buildFSUrl("records", record1.name), url);
         done();
     });
 
     //buildFSUserUrl
     it('buildFSUserURL, works for any folder', function(done){
-        var url = "http://cobwebsvc.edina.ac.uk/1.3/pcapi/fs/local/xxx/records/Text (20-08-2014 16h18m18s)";
+        var url = config.options[0].url+"/1.3/pcapi/fs/local/xxx/records/Text (20-08-2014 16h18m18s)";
         assert.equal(testPcapi.buildFSUserUrl("xxx", "records", record1.name), url);
         done();
     });
@@ -327,6 +335,7 @@ describe('#Record', function(){
         };
         testPcapi.getItem(options).then(function(result){
             try {
+                console.log(result)
                 assert.deepEqual(result, res, "The record is the right one");
                 done();
             } catch(x) {

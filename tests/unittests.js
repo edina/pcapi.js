@@ -17,15 +17,15 @@ var config = {
 //chai.use(chaiAsPromised);
 var assert = chai.assert;
 
-var providers = ['local', 'dropbox'];
+var providers = ['dropbox', 'local'];
 var testPcapi = pcapi;
 
 //initialize pcpapi with local provider
-testPcapi.init(config.options[providers[0]]);
+testPcapi.init(config.options[providers[1]]);
 //set the provider
-testPcapi.setProvider(providers[0]);
+testPcapi.setProvider(providers[1]);
 //set the userid
-testPcapi.setCloudLogin(config.options[providers[0]]["userId"]);
+testPcapi.setCloudLogin(config.options[providers[1]]["userId"]);
 
 
 
@@ -37,13 +37,13 @@ describe('#checkProviders', function(){
     });
 
     it('check for the providers', function(){
-        sinon.stub(testPcapi, 'getProviders').returns(Promise.resolve(fakeData));
-        expect(testPcapi.getProviders()).to.eventually.have.keys(providers);
+        sinon.stub(testPcapi, 'getProviders').returns(fakeData);
+        expect(testPcapi.getProviders()).to.have.keys(providers);
     });
 
     //get the selected provider
     it('check for selected provider', function(done){
-        expect(testPcapi.getProvider()).to.equal(providers[0]);
+        expect(testPcapi.getProvider()).to.equal(providers[1]);
         done();
     });
 });
@@ -53,7 +53,7 @@ describe('#checkProviders', function(){
 describe('#User functions', function(){
     //getuserid
     it('get user id', function(done) {
-        expect(testPcapi.getUserId()).to.equal(config.options[providers[0]]["userId"]);
+        expect(testPcapi.getUserId()).to.equal(config.options[providers[1]]["userId"]);
         done();
     });
 });

@@ -13,6 +13,9 @@
     "author": "P. Terzis",
     "license": "BSD",
     "preferGlobal": true,
+    "dependencies": {
+        "jquery": "1.11.2"
+    },
     "devDependencies": {
         "gulp": "~3.8.10",
         "gulp-mocha-phantomjs": "0.5.3",
