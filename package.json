@@ -1,42 +1,38 @@
 {
-    "name": "pcapi",
-    "version": "0.0.4",
-    "description": "A javascript API for PCAPI",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "keywords": [
-        "pcapi",
-        "dropbox",
-        "edina"
-    ],
-    "author": "P. Terzis",
-    "license": "BSD",
-    "preferGlobal": true,
-    "dependencies": {
-        "jquery": "1.11.2"
-    },
-    "devDependencies": {
-        "gulp": "~3.8.10",
-        "gulp-mocha-phantomjs": "0.5.3",
-        "gulp-jshint": "1.9.2",
-        "gulp-uglify": "1.1.0",
-        "gulp-clean": "0.3.1",
-        "gulp-concat": "2.4.3",
-        "gulp-rename": "1.2.0",
-        "gulp-bump": "0.1.13",
-        "gulp-git": "0.5.6",
-        "uglify-js": "latest",
-        "jshint": "2.5.3",
-        "mocha": "2.1.0",
-        "chai": "1.10.0",
-        "phantomjs": "1.9.15",
-        "sinon": "1.12.2",
-        "chai-as-promised": "4.1.1",
-        "mocha-phantomjs": "3.5.3",
-        "promise-polyfill": "2.0.0"
-    },
-    "engines": {
-        "node": ">=0.10"
-    }
+  "name": "pcapi",
+  "version": "0.0.4",
+  "description": "A javascript API for PCAPI",
+  "scripts": {
+    "test": "node_modules/mocha-phantomjs/bin/mocha-phantomjs -R xunit -f test.xml tests/index.html",
+    "lint": "node_modules/jshint/bin/jshint js/**.js",
+    "uglify": "node_modules/uglify-js/bin/uglifyjs js/pcapi.js -o dist/pcapi.min.js",
+    "copy": "node_modules/shelljs/bin/shjs copy.js",
+    "release-it": "node_modules/release-it/bin/release.js",
+    "release": "npm run lint & npm run test & npm run copy & npm run uglify & npm run release-it"
+  },
+  "keywords": [
+    "pcapi",
+    "dropbox",
+    "edina"
+  ],
+  "author": "P. Terzis",
+  "license": "BSD",
+  "preferGlobal": true,
+  "dependencies": {
+    "jquery": "1.11.2"
+  },
+  "devDependencies": {
+    "uglify-js": "latest",
+    "jshint": "2.5.3",
+    "mocha": "2.1.0",
+    "chai": "1.10.0",
+    "phantomjs": "1.9.15",
+    "sinon": "1.12.2",
+    "mocha-phantomjs": "3.5.3",
+    "release-it": "0.0.15",
+    "shelljs": "0.4.0"
+  },
+  "engines": {
+    "node": ">=0.10"
+  }
 }
