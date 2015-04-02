@@ -199,55 +199,30 @@ var pcapi = (function(){
     };
 
     var doRequest = function(method, url, data, contentType) {
-        // Return a new promise.
-        return new Promise(function(resolve, reject) {
-            // Do the usual XHR stuff
-            var req = new XMLHttpRequest();
-            if(method === "GET" && data){
-                url += "?"+Object.keys(data).map(function(k) {
-                    return encodeURIComponent(k) + '=' + encodeURIComponent(data[k]);
-                }).join('&');
-            }
-            req.open(method, url);
-
-            req.onload = function() {
-                // This is called even on 404 etc
-                // so check the status
-                if (req.status == 200) {
-                    // Resolve the promise with the response text
-                    if (req.response.error === 1){
-                        reject(Error(req.response.msg));
-                    }
-                    else{
-                        resolve(req.response);
-                    }
-                }
-                else {
-                    // Otherwise reject with the status text
-                    // which will hopefully be a meaningful error
-                    reject(Error(req.statusText));
-                }
-            };
-
-            // Handle network errors
-            req.onerror = function() {
-                reject(Error("Network Error"));
-            };
-
-            // Make the request
-            if(method === "POST" || method === "PUT"){
-                if(contentType){
-                    req.setRequestHeader("Content-type", contentType);
-                }
-                else{
-                    req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-                }
-                req.send(data);
+        var deferred = new $.Deferred();
+        $.ajax({
+            type: method,
+            data: data,
+            url: url,
+            contentType: contentType
+        }).then(function(data){
+            if(typeof(data) === 'object'){
+                deferred.resolve(data);
             }
             else{
-                req.send();
+                try {
+                    deferred.resolve(JSON.parse(data));
+                } catch(e){
+                    console.error(e);
+                    deferred.reject(e);
+                }
             }
+        }).fail(function(error){
+            console.error("Problem with " + url + " : status=" +
+                                  status + " : " + error);
+            deferred.reject(error);
         });
+        return deferred.promise();
     };
 
     /**
@@ -432,16 +407,7 @@ var pcapi = (function(){
 
             console.debug("Delete item from "+remoteDir+" with " + url);
 
-            return new Promise(function(resolve, reject){
-                doRequest("DELETE", url).then(function(result){
-                    resolve(JSON.parse(result));
-                }, function (error) {
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("DELETE", url);
         },
 
         /**
@@ -514,16 +480,7 @@ var pcapi = (function(){
 
             console.debug("Get items of "+remoteDir+" with " + url);
 
-            return new Promise(function(resolve, reject){
-                doRequest("GET", url).then(function(result){
-                    resolve(JSON.parse(result));
-                }, function (error) {
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("GET", url);
         },
 
         /**
@@ -537,21 +494,7 @@ var pcapi = (function(){
 
             console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + url);
 
-            return new Promise(function(resolve, reject){
-                doRequest("GET", url).then(function(result){
-                    if(options.remoteDir === "records") {
-                        resolve(JSON.parse(result));
-                    }
-                    else{
-                        resolve(result);
-                    }
-                }, function (error) {
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("GET", url);
 
         },
 
@@ -567,22 +510,7 @@ var pcapi = (function(){
 
             console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + url);
 
-            return new Promise(function(resolve, reject){
-                doRequest("GET", url).then(function(result){
-                    if(options.remoteDir === 'records'){
-                        resolve(JSON.parse(result));
-                    }
-                    else{
-                        resolve(result);
-                    }
-                }, function (error) {
-                    //console.log(error)
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("GET", url, options.data);
         },
 
         /**
@@ -602,16 +530,7 @@ var pcapi = (function(){
             }
             console.log("with filters "+JSON.stringify(options.filters));
 
-            return new Promise(function(resolve, reject){
-                doRequest("GET", url, options.filters).then(function(result){
-                    resolve(JSON.parse(result));
-                }, function (error) {
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("GET", url, options.filters);
         },
 
         /**
@@ -645,16 +564,7 @@ var pcapi = (function(){
          */
         getProviders: function(response){
             var url = this.getCloudProviderUrl()+"/auth/providers";
-            return new Promise(function(resolve, reject){
-                doRequest("GET", url).then(function(result){
-                    resolve(JSON.parse(result));
-                }, function (error) {
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("GET", url);
         },
 
         /**
@@ -715,15 +625,15 @@ var pcapi = (function(){
          * @return an string of the form key1=value1&key2=value2
          */
         objectToURL: function(obj){
-          var params = [];
-          if(typeof(obj) === 'object'){
-            for(var key in obj){
-              if(obj.hasOwnProperty(key)){
-                params.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
-              }
+            var params = [];
+            if(typeof(obj) === 'object'){
+                for(var key in obj){
+                    if(obj.hasOwnProperty(key)){
+                        params.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+                    }
+                }
             }
-          }
-          return params.join("&");
+            return params.join("&");
         },
 
         /**
@@ -751,16 +661,7 @@ var pcapi = (function(){
             }
 
             console.debug("Post item to "+options.remoteDir+" with " + url);
-            return new Promise(function(resolve, reject){
-                doRequest("POST", url, data).then(function(result){
-                    resolve(JSON.parse(result));
-                }, function (error) {
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("POST", url, data);
 
         },
 
@@ -809,6 +710,14 @@ var pcapi = (function(){
         },
 
         /**
+         * function for setting the PCAPI version
+         * @param{String} the version number
+         */
+        setVersion: function(version){
+            this.version = version;
+        },
+
+        /**
          * Update a record|editor on the cloud
          * @param {String} options.remoteDir remote directory [records|editors]
          * @param {String} options.path, could be either editor or record
@@ -834,16 +743,7 @@ var pcapi = (function(){
 
             console.debug("PUT item to "+options.remoteDir+" with " + url);
 
-            return new Promise(function(resolve, reject){
-                doRequest("PUT", url, data).then(function(result){
-                    resolve(JSON.parse(result));
-                }, function (error) {
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("PUT", url, data);
 
         },
 
@@ -867,16 +767,7 @@ var pcapi = (function(){
             var formData = new FormData();
             formData.append("upload", options.file);
 
-            return new Promise(function(resolve, reject){
-                doRequest("POST", url, formData, options.contentType).then(function(result){
-                    resolve(JSON.parse(result));
-                }, function (error) {
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    reject(Error("Problem with " + url + " : status=" +
-                                  status + " : " + error));
-                });
-            });
+            return doRequest("POST", url, formData, options.contentType);
         }
     };
 
@@ -893,7 +784,6 @@ if ( typeof module === "object" && typeof module.exports === "object" ) {
 else {
     // Register as a named AMD module
     if ( typeof define === "function" && define.amd ) {
-        //define( "pcapi", [], function () { console.log('yyyy'); return pcapi; } );
         define( ["pcapi"], function() {
             return pcapi;
         });
