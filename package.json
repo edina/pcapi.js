@@ -6,7 +6,7 @@
     "test": "node_modules/mocha-phantomjs/bin/mocha-phantomjs -R xunit -f test.xml tests/index.html",
     "lint": "node_modules/jshint/bin/jshint js/**.js",
     "uglify": "node_modules/uglify-js/bin/uglifyjs js/pcapi.js -o dist/pcapi.min.js",
-    "copy": "node_modules/shelljs/bin/shjs copy.js",
+    "copy": "node_modules/shelljs/bin/shjs scripts/copy.js",
     "release-it": "node_modules/release-it/bin/release.js",
     "release": "npm run lint & npm run test & npm run copy & npm run uglify & npm run release-it"
   },
