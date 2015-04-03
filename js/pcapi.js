@@ -1,10 +1,8 @@
 /*
 Copyright (c) 2014, EDINA.
 All rights reserved.
-
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
-
 1. Redistributions of source code must retain the above copyright notice, this
    list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice, this
@@ -16,7 +14,6 @@ are permitted provided that the following conditions are met:
 4. Neither the name of the EDINA nor the names of its contributors may be used to
    endorse or promote products derived from this software without specific prior
    written permission.
-
 THIS SOFTWARE IS PROVIDED BY EDINA ''AS IS'' AND ANY EXPRESS OR IMPLIED
 WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
@@ -206,7 +203,7 @@ var pcapi = (function(){
             url: url,
             contentType: contentType
         }).then(function(data){
-            if(typeof(data) === 'object'){
+            if((typeof(data) === 'string' && contentType === 'html') || (typeof(data) === 'object')){
                 deferred.resolve(data);
             }
             else{
@@ -417,11 +414,8 @@ var pcapi = (function(){
          * @param callback function after fetching the items
          */
         /*exportItem: function(options, callback){
-
             var url = this.buildUrl("export", options.item.name);
-
             console.debug("PUT item to "+options.remoteDir+" with " + url);
-
             $.ajax({
                 type: "POST",
                 data: data,
@@ -470,6 +464,17 @@ var pcapi = (function(){
         },
 
         /**
+         * Fetch one editor from the cloud
+         * @param options.remoteDir remote directory [records|editors]
+         * @param options.item get a file from PCAPI
+         * @param options.userId if we want to use different userid
+         */
+        getEditor: function(options){
+            options.contentType = 'html';
+            return this.getItem(options);
+        },
+
+        /**
          * Fetch all the items on the cloud
          * @param {String} remoteDir remote directory
          * @param {String} userId
@@ -499,18 +504,20 @@ var pcapi = (function(){
         },
 
         /**
-         * Fetch all the records|editors on the cloud
+         * Fetch one item from records|editors on the cloud
          * @param options.remoteDir remote directory [records|editors]
          * @param options.item get a file from PCAPI
          * @param options.userId if we want to use different userid
+         * @param options.contentType the contentType of the request
          */
         getItem: function(options){
             var userId = options.userId || getCloudLoginId();
+            var contentType = options.contentType || 'json';
             var url = this.buildUserUrl(userId, options.remoteDir, options.item);
 
             console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + url);
 
-            return doRequest("GET", url, options.data);
+            return doRequest("GET", url, options.data, contentType);
         },
 
         /**
@@ -649,15 +656,15 @@ var pcapi = (function(){
             if(options.remoteDir === "records") {
                 data = JSON.stringify(options.data, undefined, 2);
                 path = options.path;
-                url = this.buildUserUrl(userId, options.remoteDir, path);
+                url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else if(options.remoteDir === "editors") {
                 data = options.data;
                 path = options.path+".edtr";
-                url = this.buildUserUrl(userId, options.remoteDir, path);
+                url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else{
-                url = this.buildFSUserUrl(userId, options.remoteDir, path);
+                url = this.buildFSUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
 
             console.debug("Post item to "+options.remoteDir+" with " + url);
@@ -730,15 +737,15 @@ var pcapi = (function(){
             if(options.remoteDir === "records") {
                 data = JSON.stringify(options.data, undefined, 2);
                 path = options.path;
-                url = this.buildUserUrl(userId, options.remoteDir, path);
+                url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else if(options.remoteDir === "editors") {
                 data = options.data;
                 path = options.path+".edtr";
-                url = this.buildUserUrl(userId, options.remoteDir, path);
+                url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else{
-                url = this.buildFSUserUrl(userId, options.remoteDir, path);
+                url = this.buildFSUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
 
             console.debug("PUT item to "+options.remoteDir+" with " + url);
