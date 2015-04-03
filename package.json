@@ -30,7 +30,8 @@
     "sinon": "1.12.2",
     "mocha-phantomjs": "3.5.3",
     "release-it": "0.0.15",
-    "shelljs": "0.4.0"
+    "shelljs": "0.4.0",
+    "promise-polyfill": "2.0.0"
   },
   "engines": {
     "node": ">=0.10"
