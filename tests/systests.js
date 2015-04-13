@@ -362,74 +362,15 @@ describe('#Record', function(){
     });
 
     //uploadFile
-    /*it('upload a file', function(done){
-        
-        //TO-DO: investigate why is not working
-        //var canvas = document.getElementById("myCanvas");
-        //var dataURL = canvas.toDataURL('image/jpeg', 0.5);
-        //var blob = b64toBlob(image, "image/jpg");
-        //var blob = new Blob([image], {
-        //    type: "image",
-        //    filename: "test",
-        //    name: "test.jpg"
-        //});
-        //var options = {
-        //    "remoteDir": "records",
-        //    "path": record1.name+"/test.jpg",
-        //    "file": blob,
-        //    "contentType": "jpg"
-        //};
+    it('upload a file', function(done){
+
         function dataURItoBlob(dataURI) {
-            // convert base64/URLEncoded data component to raw binary data held in a string
-            var byteString;
-            if (dataURI.split(',')[0].indexOf('base64') >= 0)
-                byteString = atob(dataURI.split(',')[1]);
-            else
-                byteString = unescape(dataURI.split(',')[1]);
-
-            // separate out the mime component
-            var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-
-            // write the bytes of the string to a typed array
-            var ia = new Uint8Array(byteString.length);
-            for (var i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
-
-            return new Blob([ia], {type:mimeString});
-        }
-        
-        function dataURItoBlob2(dataURI) {
             var binary = atob(dataURI.split(',')[1]);
             var array = [];
             for(var i = 0; i < binary.length; i++) {
                 array.push(binary.charCodeAt(i));
             }
             return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
-        }
-
-        function b64toBlob(b64Data, contentType, sliceSize) {
-            contentType = contentType || '';
-            sliceSize = sliceSize || 512;
-
-            var byteCharacters = atob(b64Data);
-            var byteArrays = [];
-
-            for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-                var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-                var byteNumbers = new Array(slice.length);
-                for (var i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-
-                var byteArray = new Uint8Array(byteNumbers);
-
-                byteArrays.push(byteArray);
-            }
-
-            var blob = new Blob(byteArrays, {type: contentType});
-            return blob;
         }
 
         var myCanvas = document.createElement("canvas");
@@ -455,20 +396,23 @@ describe('#Record', function(){
 
         var dataURL = myCanvas.toDataURL("image/png");
         var ext = "png";
-        var blob = dataURItoBlob2(dataURL);
+        var blob = dataURItoBlob(dataURL);
         var options = {
             "remoteDir": "records",
             "path": record1.name+"/test."+ext,
             "file": blob,
-            "contentType": ext
+            "contentType": false
         };
-        //var dataURL = myCanvas.toDataURL();
-        //console.log('xxxxxx');
-        //console.log(dataURL);
+        var res = {msg: "File uploaded", path: "/records/Text (20-08-2014 16h18m18s)/test.png", error: 0}
         testPcapi.uploadFile(options).then(function(result){
-            console.log(result)
+            try {
+                assert.deepEqual(result, res, res.msg);
+                done();
+            } catch(x) {
+                done(x);
+            }
         });
-    });*/
+    });
 
     //getAssets
     it('get all images', function(done){
