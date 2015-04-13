@@ -31,7 +31,7 @@ DAMAGE.
 var pcapi = (function(){
 
     // List of reserved dirs
-    var reservedDirs = ['editors', 'layers', 'records'];
+    var reservedDirs = ['editors', 'records'];
 
     /**
      * Unset user login id.
@@ -195,15 +195,17 @@ var pcapi = (function(){
         });
     };
 
-    var doRequest = function(method, url, data, contentType) {
+    /**
+     * do ajax requests by using promises
+     * @param options.type
+     * @param options.url
+     * @param options data
+     * @param options.contenType
+     */
+    var doRequest = function(options) {
         var deferred = new $.Deferred();
-        $.ajax({
-            type: method,
-            data: data,
-            url: url,
-            contentType: contentType
-        }).then(function(data){
-            if((typeof(data) === 'string' && contentType === 'html') || (typeof(data) === 'object')){
+        $.ajax(options).then(function(data){
+            if((typeof(data) === 'string' && options.contentType === 'html') || (typeof(data) === 'object')){
                 deferred.resolve(data);
             }
             else{
@@ -215,7 +217,7 @@ var pcapi = (function(){
                 }
             }
         }).fail(function(error){
-            console.error("Problem with " + url + " : status=" +
+            console.error("Problem with " + options.url + " : status=" +
                                   status + " : " + error);
             deferred.reject(error);
         });
@@ -400,11 +402,13 @@ var pcapi = (function(){
          */
         deleteItem: function(remoteDir, path, userId){
             userId = userId || getCloudLoginId();
-            var url = this.buildFSUserUrl(userId, remoteDir, path);
+            var options = {};
+            options.url = this.buildFSUserUrl(userId, remoteDir, path);
+            options.type = "DELETE";
 
-            console.debug("Delete item from "+remoteDir+" with " + url);
+            console.debug("Delete item from "+remoteDir+" with " + options.url);
 
-            return doRequest("DELETE", url);
+            return doRequest(options);
         },
 
         /**
@@ -481,11 +485,13 @@ var pcapi = (function(){
          */
         getFSItems: function(remoteDir, userId){
             userId = userId || getCloudLoginId();
-            var url = this.buildFSUserUrl(userId, remoteDir);
+            var options = {};
+            options.url = this.buildFSUserUrl(userId, remoteDir);
+            options.type = "GET";
 
-            console.debug("Get items of "+remoteDir+" with " + url);
+            console.debug("Get items of "+remoteDir+" with " + options.url);
 
-            return doRequest("GET", url);
+            return doRequest(options);
         },
 
         /**
@@ -495,11 +501,13 @@ var pcapi = (function(){
          */
         getFSItem: function(options){
             var userId = options.userId || getCloudLoginId();
-            var url = this.buildFSUserUrl(userId, options.remoteDir, options.item);
+            var requestOptions = {};
+            requestOptions.url = this.buildFSUserUrl(userId, options.remoteDir, options.item);
+            requestOptions.type = "GET";
 
-            console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + url);
+            console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + requestOptions.url);
 
-            return doRequest("GET", url);
+            return doRequest(requestOptions);
 
         },
 
@@ -512,12 +520,15 @@ var pcapi = (function(){
          */
         getItem: function(options){
             var userId = options.userId || getCloudLoginId();
-            var contentType = options.contentType || 'json';
-            var url = this.buildUserUrl(userId, options.remoteDir, options.item);
+            var requestOptions = {};
+            requestOptions.contentType = options.contentType || 'json';
+            requestOptions.url = this.buildUserUrl(userId, options.remoteDir, options.item);
+            requestOptions.data = options.data;
+            requestOptions.type = "GET";
 
-            console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + url);
+            console.debug("Get item "+options.item+" of "+options.remoteDir+" with " + requestOptions.url);
 
-            return doRequest("GET", url, options.data, contentType);
+            return doRequest(requestOptions);
         },
 
         /**
@@ -528,16 +539,15 @@ var pcapi = (function(){
          */
         getItems: function(options){
             var userId = options.userId || getCloudLoginId();
-            var url = this.buildUserUrl(userId, options.remoteDir, options.extras);
+            var requestOptions = {};
+            requestOptions.type = "GET";
+            requestOptions.url = this.buildUserUrl(userId, options.remoteDir, options.extras);
+            requestOptions.data = options.filters || {};
 
-            console.debug("Get items of "+options.remoteDir+" with " + url);
-            //if it's undefined make it empty object in order not to break it
-            if(options.filters === undefined){
-                options.filters = {};
-            }
-            console.log("with filters "+JSON.stringify(options.filters));
+            console.debug("Get items of "+options.remoteDir+" with " + requestOptions.url);
+            console.log("with filters "+JSON.stringify(requestOptions.data));
 
-            return doRequest("GET", url, options.filters);
+            return doRequest(requestOptions);
         },
 
         /**
@@ -570,8 +580,11 @@ var pcapi = (function(){
          * @return promise with the data for providers
          */
         getProviders: function(response){
-            var url = this.getCloudProviderUrl()+"/auth/providers";
-            return doRequest("GET", url);
+            var options = {
+                type: "GET",
+                url:  this.getCloudProviderUrl()+"/auth/providers"
+            };
+            return doRequest(options);
         },
 
         /**
@@ -651,24 +664,25 @@ var pcapi = (function(){
          * @param {String} options.userId
          */
         saveItem: function(options){
-            var data, path, url;
+            var path, requestOptions = {};
             var userId = options.userId || getCloudLoginId();
+            requestOptions.type = "POST";
             if(options.remoteDir === "records") {
-                data = JSON.stringify(options.data, undefined, 2);
+                requestOptions.data = JSON.stringify(options.data, undefined, 2);
                 path = options.path;
-                url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
+                requestOptions.url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else if(options.remoteDir === "editors") {
-                data = options.data;
+                requestOptions.data = options.data;
                 path = options.path+".edtr";
-                url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
+                requestOptions.url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else{
-                url = this.buildFSUserUrl(userId, options.remoteDir, path, options.urlParams);
+                requestOptions.url = this.buildFSUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
 
-            console.debug("Post item to "+options.remoteDir+" with " + url);
-            return doRequest("POST", url, data);
+            console.debug("Post item to "+options.remoteDir+" with " + requestOptions.url);
+            return doRequest(requestOptions);
 
         },
 
@@ -732,25 +746,26 @@ var pcapi = (function(){
          * @param {String} options.userId
          */
         updateItem: function(options){
-            var data, path, url;
+            var path, requestOptions = {};
+            requestOptions.type = "PUT";
             var userId = options.userId || getCloudLoginId();
             if(options.remoteDir === "records") {
-                data = JSON.stringify(options.data, undefined, 2);
+                requestOptions.data = JSON.stringify(options.data, undefined, 2);
                 path = options.path;
-                url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
+                requestOptions.url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else if(options.remoteDir === "editors") {
-                data = options.data;
+                requestOptions.data = options.data;
                 path = options.path+".edtr";
-                url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
+                requestOptions.url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else{
-                url = this.buildFSUserUrl(userId, options.remoteDir, path, options.urlParams);
+                requestOptions.url = this.buildFSUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
 
-            console.debug("PUT item to "+options.remoteDir+" with " + url);
+            console.debug("PUT item to "+options.remoteDir+" with " + requestOptions.url);
 
-            return doRequest("PUT", url, data);
+            return doRequest(requestOptions);
 
         },
 
@@ -765,16 +780,21 @@ var pcapi = (function(){
         uploadFile: function(options){
 
             var userId = options.userid || getCloudLoginId();
-            var url = this.buildFSUserUrl(userId, options.remoteDir, options.path);
+            var requestOptions = {"type": "POST"};
+            requestOptions.url = this.buildFSUserUrl(userId, options.remoteDir, options.path);
             if(reservedDirs.indexOf(options.remoteDir) > -1){
-                url = this.buildUserUrl(userId, options.remoteDir, options.path, options.urlParams);
+                requestOptions.url = this.buildUserUrl(userId, options.remoteDir, options.path, options.urlParams);
             }
 
-            console.debug("Upload item "+options.file.name+" to "+options.remoteDir+" with " + url);
-            var formData = new FormData();
-            formData.append("upload", options.file);
+            console.debug("Upload item "+options.file.name+" to "+options.remoteDir+" with " + requestOptions.url);
+            requestOptions.data = options.file;
+            requestOptions.contentType = false;
+            requestOptions.processData = false;
+            requestOptions.beforeSend = function(request) {
+                request.setRequestHeader("Content-Type", options.file.type);
+            };
 
-            return doRequest("POST", url, formData, options.contentType);
+            return doRequest(requestOptions);
         }
     };
 

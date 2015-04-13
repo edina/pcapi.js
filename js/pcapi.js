@@ -217,7 +217,7 @@ var pcapi = (function(){
                 }
             }
         }).fail(function(error){
-            console.error("Problem with " + url + " : status=" +
+            console.error("Problem with " + options.url + " : status=" +
                                   status + " : " + error);
             deferred.reject(error);
         });
@@ -583,7 +583,7 @@ var pcapi = (function(){
             var options = {
                 type: "GET",
                 url:  this.getCloudProviderUrl()+"/auth/providers"
-            }
+            };
             return doRequest(options);
         },
 
