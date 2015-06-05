@@ -22,17 +22,19 @@
     "jquery": "1.11.2"
   },
   "devDependencies": {
-    "uglify-js": "latest",
+    "chai": "1.10.0",
+    "jsdoc": "^3.3.0-beta3",
     "jshint": "2.5.3",
     "mocha": "2.1.0",
-    "chai": "1.10.0",
-    "phantomjs": "1.9.15",
-    "sinon": "1.12.2",
     "mocha-phantomjs": "3.5.3",
+    "phantomjs": "1.9.15",
+    "promise-polyfill": "2.0.0",
     "release-it": "0.0.15",
     "shelljs": "0.4.0",
-    "promise-polyfill": "2.0.0"
+    "sinon": "1.12.2",
+    "uglify-js": "latest"
   },
+  "main": "dist/pcapi.js",
   "engines": {
     "node": ">=0.10"
   }

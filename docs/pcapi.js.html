@@ -1,4 +1,32 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pcapi.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pcapi.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
 Copyright (c) 2014, EDINA.
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
@@ -205,7 +233,7 @@ var pcapi = (function(){
     var doRequest = function(options) {
         var deferred = new $.Deferred();
         $.ajax(options).then(function(data){
-            if((typeof(data) === 'string' && options.contentType === 'html') || (typeof(data) === 'object')){
+            if((typeof(data) === 'string' &amp;&amp; options.contentType === 'html') || (typeof(data) === 'object')){
                 deferred.resolve(data);
             }
             else{
@@ -253,7 +281,7 @@ var pcapi = (function(){
     /*
      * Encode a dictionary as url parameters
      * @param obj a key/value object
-     * @return an string of the form key1=value1&key2=value2
+     * @return an string of the form key1=value1&amp;key2=value2
     */
     var objectToURL = function(obj){
         var params = [];
@@ -264,7 +292,7 @@ var pcapi = (function(){
                 }
             }
         }
-        return params.join("&");
+        return params.join("&amp;");
     };
 
     /**
@@ -292,7 +320,7 @@ var pcapi = (function(){
 
         /**
          * function for building the main urls
-         * <domain>/<version>/pcapi/<records/editors>/<provider>/<userid>/...
+         * &lt;domain>/&lt;version>/pcapi/&lt;records/editors>/&lt;provider>/&lt;userid>/...
          * @param {String} remoteDir [editors|records]
          * @param {String} path the folder/file inside the records/editors folder
          * @return {String} url
@@ -304,7 +332,7 @@ var pcapi = (function(){
 
         /**
          * function for building urls for users different from the logged in ones
-         * <domain>/<version>/pcapi/<records/editors>/<provider>/<userid>/...
+         * &lt;domain>/&lt;version>/pcapi/&lt;records/editors>/&lt;provider>/&lt;userid>/...
          * @param {String} userId
          * @param {String} remoteDir [editors|records]
          * @param {String} path extra path
@@ -324,7 +352,7 @@ var pcapi = (function(){
 
         /**
          * function for building the main urls
-         * <domain>/<version>/pcapi/fs/<provider>/<userid>/<folder>/
+         * &lt;domain>/&lt;version>/pcapi/fs/&lt;provider>/&lt;userid>/&lt;folder>/
          * @param {String} remoteDir the remote dir
          * @param {String} path the folder/file inside the remoteDir folder
          * @return {String} url
@@ -336,7 +364,7 @@ var pcapi = (function(){
 
         /**
          * function for building the main urls
-         * <domain>/<version>/pcapi/fs/<provider>/<userid>/<folder>/
+         * &lt;domain>/&lt;version>/pcapi/fs/&lt;provider>/&lt;userid>/&lt;folder>/
          * @param {String} userId
          * @param {String} remoteDir the remote dir
          * @param {String} path the folder/file inside the remoteDir folder
@@ -359,7 +387,7 @@ var pcapi = (function(){
             if(!this.userId){
                 console.log("check if user is logged in");
                 var user = getCloudLogin();
-                if(user !== null && user.id){
+                if(user !== null &amp;&amp; user.id){
                     var url = this.getCloudProviderUrl() + '/auth/'+this.getProvider();
                     if (user.id !== "local") {
                         url += '/'+user.id;
@@ -558,8 +586,8 @@ var pcapi = (function(){
         getParameters: function (){
             var query = window.location.search.substring(1);
             var queryString = {};
-            var params = query.split("&");
-            for(var i=0; i<params.length; i++){
+            var params = query.split("&amp;");
+            for(var i=0; i&lt;params.length; i++){
                 var pair = params[i].split("=");
                 if (typeof queryString[pair[0]] === "undefined") {
                     queryString[pair[0]] = pair[1];
@@ -642,7 +670,7 @@ var pcapi = (function(){
         /*
          * Encode a dictionary as url parameters
          * @param obj a key/value object
-         * @return an string of the form key1=value1&key2=value2
+         * @return an string of the form key1=value1&amp;key2=value2
          */
         objectToURL: function(obj){
             var params = [];
@@ -653,7 +681,7 @@ var pcapi = (function(){
                     }
                 }
             }
-            return params.join("&");
+            return params.join("&amp;");
         },
 
         /**
@@ -801,7 +829,7 @@ var pcapi = (function(){
     return _this;
 })();
 
-if ( typeof module === "object" && typeof module.exports === "object" ) {
+if ( typeof module === "object" &amp;&amp; typeof module.exports === "object" ) {
     // Expose pcapi as module.exports in loaders that implement the Node
     // module pattern (including browserify). Do not create the global, since
     // the user will be storing it themselves locally, and globals are frowned
@@ -810,7 +838,7 @@ if ( typeof module === "object" && typeof module.exports === "object" ) {
 }
 else {
     // Register as a named AMD module
-    if ( typeof define === "function" && define.amd ) {
+    if ( typeof define === "function" &amp;&amp; define.amd ) {
         define( ["pcapi"], function() {
             return pcapi;
         });
@@ -818,6 +846,28 @@ else {
 }
 
 // If there is a window object, that at least has a document property,
-if ( typeof window === "object" && typeof window.document === "object" ) {
+if ( typeof window === "object" &amp;&amp; typeof window.document === "object" ) {
     window.pcapi = pcapi;
-}
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Tue Apr 21 2015 10:03:51 GMT+0100 (BST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
