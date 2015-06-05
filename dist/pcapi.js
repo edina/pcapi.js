@@ -660,7 +660,7 @@ var pcapi = (function(){
          * Post a record|editor on the cloud
          * @param {String} options.remoteDir remote directory [records|editors]
          * @param {Object} options.path could be either editor or record
-         * @param {Object, String} options.data
+         * @param {Object} options.data
          * @param {String} options.userId
          */
         saveItem: function(options){
