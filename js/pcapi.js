@@ -31,7 +31,7 @@ DAMAGE.
 var pcapi = (function(){
 
     // List of reserved dirs
-    var reservedDirs = ['editors', 'records'];
+    var reservedDirs = ['editors', 'records', 'features'];
 
     /**
      * Unset user login id.
