@@ -674,7 +674,7 @@ var pcapi = (function(){
             }
             else if(options.remoteDir === "editors") {
                 requestOptions.data = options.data;
-                path = options.path+".edtr";
+                path = options.path;
                 requestOptions.url = this.buildUserUrl(userId, options.remoteDir, path, options.urlParams);
             }
             else{
