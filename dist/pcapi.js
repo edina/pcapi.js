@@ -204,6 +204,7 @@ var pcapi = (function(){
      */
     var doRequest = function(options) {
         var deferred = new $.Deferred();
+        options.cache = false;
         $.ajax(options).then(function(data){
             if((typeof(data) === 'string' && options.contentType === 'html') || (typeof(data) === 'object')){
                 deferred.resolve(data);
