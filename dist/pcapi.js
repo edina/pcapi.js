@@ -798,30 +798,6 @@ var pcapi = (function(){
             };
 
             return doRequest(requestOptions);
-        },
-
-        /**
-         * function for uploading a file
-         * @param {String} options.remoteDir
-         * @param options.path
-         * @param options.file
-         * @param options.userid
-         * @param options.urlParams Additional parameter for the url
-         */
-        uploadFileWithPost: function(options) {
-            this.uploadFile(options, "POST");
-        },
-
-        /**
-         * function for uploading a file
-         * @param {String} options.remoteDir
-         * @param options.path
-         * @param options.file
-         * @param options.userid
-         * @param options.urlParams Additional parameter for the url
-         */
-        uploadFileWithPut: function(options){
-            this.uploadFile(options, "PUT");
         }
     };
 
