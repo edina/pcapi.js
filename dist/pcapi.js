@@ -777,11 +777,13 @@ var pcapi = (function(){
          * @param options.file
          * @param options.userid
          * @param options.urlParams Additional parameter for the url
+         * @param type POST or PUT
          */
-        uploadFile: function(options){
+        uploadFile: function(options, type){
+            type = type || "POST";
 
             var userId = options.userid || getCloudLoginId();
-            var requestOptions = {"type": "POST"};
+            var requestOptions = {"type": type};
             requestOptions.url = this.buildFSUserUrl(userId, options.remoteDir, options.path);
             if(reservedDirs.indexOf(options.remoteDir) > -1){
                 requestOptions.url = this.buildUserUrl(userId, options.remoteDir, options.path, options.urlParams);
@@ -796,6 +798,30 @@ var pcapi = (function(){
             };
 
             return doRequest(requestOptions);
+        },
+
+        /**
+         * function for uploading a file
+         * @param {String} options.remoteDir
+         * @param options.path
+         * @param options.file
+         * @param options.userid
+         * @param options.urlParams Additional parameter for the url
+         */
+        uploadFileWithPost: function(options) {
+            this.uploadFile(options, "POST");
+        },
+
+        /**
+         * function for uploading a file
+         * @param {String} options.remoteDir
+         * @param options.path
+         * @param options.file
+         * @param options.userid
+         * @param options.urlParams Additional parameter for the url
+         */
+        uploadFileWithPut: function(options){
+            this.uploadFile(options, "PUT");
         }
     };
 
