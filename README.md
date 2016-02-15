@@ -29,3 +29,5 @@ For releasing the library
 ```
 npm run release
 ```
+
+Answer with all the default options, apart from the last one which is about publishing it which it should be yes.
