@@ -200,7 +200,7 @@ var pcapi = (function(){
      * @param options.type
      * @param options.url
      * @param options data
-     * @param options.contenType
+     * @param options.contentType
      */
     var doRequest = function(options) {
         var deferred = new $.Deferred();
@@ -358,7 +358,6 @@ var pcapi = (function(){
          */
         checkLogin: function(callback){
             if(!this.userId){
-                console.log("check if user is logged in");
                 var user = getCloudLogin();
                 if(user !== null && user.id){
                     var url = this.getCloudProviderUrl() + '/auth/'+this.getProvider();
@@ -412,35 +411,26 @@ var pcapi = (function(){
             return doRequest(options);
         },
 
+        /** provide public interface to doRequest for testing */
+        doRequest: doRequest,
+
         /**
-         * Export a record on the
-         * @param options.remoteDir remote directory [records|editors]
-         * @param options.item, could be either editor or record
-         * @param callback function after fetching the items
+         * Trigger internal record export into the database
+         * @param {String} userId
+         * @param {String} recordName Name of the record to export
+         * @param {function} callback function after fetching the items
          */
-        /*exportItem: function(options, callback){
-            var url = this.buildUrl("export", options.item.name);
-            console.debug("PUT item to "+options.remoteDir+" with " + url);
-            $.ajax({
-                type: "POST",
-                data: data,
-                cache: false,
-                url: url,
-                success: function(data){
-                    if(data.error == 1){
-                        callback(false);
-                    }
-                    else{
-                        callback(true, data);
-                    }
-                },
-                error: function(jqXHR, status, error){
-                    console.error("Problem with " + url + " : status=" +
-                                  status + " : " + error);
-                    callback(false);
-                }
-            });
-        },*/
+        exportRecord: function(userId, recordName){
+            var url = this.buildUserUrl(userId, "records", recordName);
+            var options = {
+                type: 'GET',
+                dataType: 'json',
+                url: url + '?ogc_sync=true',
+                cache: false
+            };
+
+            return this.doRequest(options);
+        },
 
         /**
          * function for getting the assets urls
@@ -546,7 +536,6 @@ var pcapi = (function(){
             requestOptions.data = options.filters || {};
 
             console.debug("Get items of "+options.remoteDir+" with " + requestOptions.url);
-            console.log("with filters "+JSON.stringify(requestOptions.data));
 
             return doRequest(requestOptions);
         },
