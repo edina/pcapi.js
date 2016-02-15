@@ -120,7 +120,7 @@ describe('#Record', function(){
         testPcapi.saveItem(options).then(function(result){
             try {
                 assert.deepEqual(result, fakeData);
-                testPcapi.saveItem.restore(); 
+                testPcapi.saveItem.restore();
                 done();
             } catch(x) {
                 done(x);
@@ -143,19 +143,19 @@ describe('#Record', function(){
         testPcapi.saveItem(options).then(function(result){
             try {
                 assert.deepEqual(result, fakeData);
-                testPcapi.saveItem.restore(); 
+                testPcapi.saveItem.restore();
                 done();
             } catch(x) {
                 done(x);
             }
         });
     });
-    
+
     it('upload an existing record', function(done){
         fakeData = {"msg": "File uploaded", "path": "/records/"+record1.name+" (1)/record.json", "error": 0};
         var res = {"msg": "File uploaded", "path": "/records/"+record1.name+"/record.json", "error": 0};
         sinon.stub(testPcapi, 'saveItem').returns(Promise.resolve(fakeData));
-    
+
         var options = {
             "remoteDir": "records",
             "path": record1.name,
@@ -163,7 +163,7 @@ describe('#Record', function(){
         };
         testPcapi.saveItem(options).then(function(result){
             if(result.msg === res.msg && result.error === 0 && result.path !== res.path){
-                testPcapi.saveItem.restore(); 
+                testPcapi.saveItem.restore();
                 assert.ok(true, "The record is uploaded but renamed");
                 done();
             }
@@ -173,6 +173,17 @@ describe('#Record', function(){
         });
     });
 
+    it('export record', function(done){
+        var userId = 'abc';
+        sinon.stub(testPcapi, 'doRequest', function(options){
+            var l = config.options.local;
+            var expectedUrl = l.url + '/' +  l.version + '/pcapi/records/local/' + userId + "/" + record1.name + "?ogc_sync=true";
+            assert.equal(options.url, expectedUrl);
+            done();
+        });
+        testPcapi.exportRecord(userId, record1.name);
+    });
+
     it('delete a record', function(done){
         var fakeData = {msg: "records/Text (20-08-2014 16h18m18s) (1) deleted", error: 0};
         sinon.stub(testPcapi, 'deleteItem').returns(Promise.resolve(fakeData));
@@ -180,7 +191,7 @@ describe('#Record', function(){
             //always write catch, otherwise is not catching the error and gives timeout error
             try {
                 assert.deepEqual(result, fakeData, fakeData.msg);
-                testPcapi.deleteItem.restore(); 
+                testPcapi.deleteItem.restore();
                 done();
             } catch (x) {
                 done(x);
@@ -204,7 +215,7 @@ describe('#Record', function(){
         testPcapi.updateItem(updateOptions).then(function(result){
             try {
                 assert.deepEqual(result, fakeData, fakeData.msg);
-                testPcapi.updateItem.restore(); 
+                testPcapi.updateItem.restore();
                 done();
             } catch(x) {
                 done(x);
@@ -226,7 +237,7 @@ describe('#Record', function(){
         testPcapi.getItems(options).then(function(result){
             try {
                 assert.deepEqual(result, fakeData, fakeData.msg);
-                testPcapi.getItems.restore(); 
+                testPcapi.getItems.restore();
                 done();
             } catch(x) {
                 done(x);
