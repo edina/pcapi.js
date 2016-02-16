@@ -1,7 +1,7 @@
 pcapi.js
 ========
 
-A javascript API for PCAPI. Check PCAPI's [documenation](https://github.com/edina/fieldtrip-open/wiki/apis#user-content-pcapi)
+A javascript library for the PCAPI. Check PCAPI's [documenation](https://github.com/edina/fieldtrip-open/wiki/apis#user-content-pcapi)
 
 
 [![Build Status](https://travis-ci.org/edina/pcapi.js.svg?branch=master)](https://travis-ci.org/edina/pcapi.js.svg?branch=master)
