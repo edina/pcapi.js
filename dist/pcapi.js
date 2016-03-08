@@ -569,7 +569,7 @@ var pcapi = (function(){
          * Get all providers PCAPI supports
          * @return promise with the data for providers
          */
-        getProviders: function(response){
+        getProviders: function(){
             var options = {
                 type: "GET",
                 url:  this.getCloudProviderUrl()+"/auth/providers"
@@ -599,8 +599,7 @@ var pcapi = (function(){
          * @returns the userId for PCAPI
          */
         getUserId: function(){
-            var id = getCloudLoginId();
-            return id;
+            return getCloudLoginId();
         },
 
         /**
@@ -803,7 +802,7 @@ if ( typeof module === "object" && typeof module.exports === "object" ) {
 else {
     // Register as a named AMD module
     if ( typeof define === "function" && define.amd ) {
-        define( ["pcapi"], function() {
+        define(function(){
             return pcapi;
         });
     }
