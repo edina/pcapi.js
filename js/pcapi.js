@@ -625,6 +625,17 @@ var pcapi = (function(){
          * Logout from cloud provider.
          */
         logoutCloud: function(){
+            var cb;
+            var provider = this.getProvider();
+            var loginUrl = _this.getCloudProviderUrl() + '/auth/' + provider;
+
+            // Clear cookies
+            if ( provider === 'local') {
+                cb = window.open(loginUrl, '_blank', 'location=no,clearsessioncache=yes');
+                cb.addEventListener('loadstop', function() {
+                cb.close();
+                });
+            }
             clearCloudLogin();
         },
 
