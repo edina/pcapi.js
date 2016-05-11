@@ -75,6 +75,18 @@ describe('#URLS', function(){
         done();
     });
 
+    it('cloud provider url check with no version number', function(done){
+        var options = {
+            "url": "http://example.com",
+            "userId": "00000000-0000-0000-0000-000000000000"
+        };
+        testPcapi.init(options);
+        var url = "http://example.com";
+        assert.equal(testPcapi.getCloudProviderUrl(), url);
+        testPcapi.init(config.options[providers[1]]);
+        done();
+    });
+
     //buildURL
     it('buildURL, works for editors, records', function(done){
         var url = "http://example.com/1.3/pcapi/records/local/00000000-0000-0000-0000-000000000000/Text (20-08-2014 16h18m18s)";
