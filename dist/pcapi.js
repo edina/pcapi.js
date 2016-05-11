@@ -287,8 +287,11 @@ var pcapi = (function(){
          */
         init: function(options){
             this.baseUrl = options.url;
-            this.version = options.version;
-            this.cloudProviderUrl = options.url + "/" + options.version + "/pcapi";
+            this.version = options.version || "";
+            this.cloudProviderUrl = options.url;
+            if(this.version !== ""){
+                this.cloudProviderUrl += "/" + this.version + "/pcapi";
+            }
         },
 
         /**

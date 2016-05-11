@@ -1,6 +1,6 @@
 {
   "name": "pcapi",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A javascript API for PCAPI",
   "scripts": {
     "test": "node_modules/mocha-phantomjs/bin/mocha-phantomjs -R xunit -f test.xml tests/index.html",
