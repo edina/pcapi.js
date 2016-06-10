@@ -371,8 +371,8 @@ describe('#Record', function(){
         var clearCookies = false;
         sinon.stub(window, 'open', function(url){
             var target = config.options.local.url + '/' +
-                config.options.local.version + '/auth/local';
-            assert.equal(url, 'http://example.com/1.3/pcapi/auth/local');
+                config.options.local.version + '/pcapi/auth/local';
+            assert.equal(url, target);
             return{
                 addEventListener: function(){
                     clearCookies = true;
