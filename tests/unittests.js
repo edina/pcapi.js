@@ -365,4 +365,33 @@ describe('#Record', function(){
             }
         });
     });
+
+
+    it('logout', function(done){
+        var clearCookies = false;
+        sinon.stub(window, 'open', function(url){
+            var target = config.options.local.url + '/' +
+                config.options.local.version + '/auth/local';
+            assert.equal(url, 'http://example.com/1.3/pcapi/auth/local');
+            return{
+                addEventListener: function(){
+                    clearCookies = true;
+                }
+            }
+        });
+
+        localStorage.setItem('cloud-user', 'xyz');
+        testPcapi.logoutCloud(true);
+        assert.equal(localStorage.getItem('cloud-user'), '{}');
+        assert.isTrue(clearCookies);
+
+        clearCookies = false;
+        localStorage.setItem('cloud-user', 'xyz');
+        testPcapi.logoutCloud(false);
+        assert.equal(localStorage.getItem('cloud-user'), '{}');
+        assert.isFalse(clearCookies);
+
+        done();
+    });
+
 });

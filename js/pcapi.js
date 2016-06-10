@@ -389,7 +389,7 @@ var pcapi = (function(){
                 }
                 else{
                     console.debug("No user session saved");
-                    this.logoutCloud();
+                    this.logoutCloud(false);
                 }
             }
             else{
@@ -626,19 +626,19 @@ var pcapi = (function(){
 
         /**
          * Logout from cloud provider.
+         * @param clearCookies Clear browser cookies.
          */
-        logoutCloud: function(){
-            var cb;
-            var provider = this.getProvider();
-            var loginUrl = _this.getCloudProviderUrl() + '/auth/' + provider;
-
-            // Clear cookies
-            if ( provider === 'local') {
-                cb = window.open(loginUrl, '_blank', 'location=no,clearsessioncache=yes');
+        logoutCloud: function(clearCookies){
+            if(clearCookies){
+                var cb = window.open(
+                    _this.getCloudProviderUrl() + '/auth/' + this.getProvider(),
+                    '_blank',
+                    'location=no,clearsessioncache=yes');
                 cb.addEventListener('loadstop', function() {
-                cb.close();
+                    cb.close();
                 });
             }
+
             clearCloudLogin();
         },
 
