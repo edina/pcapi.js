@@ -59,54 +59,37 @@ var pcapi = (function(){
     /**
      * Login to a local cloud provider.
      * @param callback Function called after login attempt.
-     * @param loginUrl
+     * @param loginUrl Login URL.
+     * @param cbrowser Function to allow caller requires access to childbrowser.
      */
-    var doLoginLocal = function(callback, cbrowser, loginUrl){
-        var pollTimer,
-            pollTimerCount = 0,
-            pollInterval = 3000,
-            pollForMax = 5 * 60 * 1000; //min
-        var pollUrl = loginUrl;
-        console.debug('Login with: ' + pollUrl);
-        var cb = window.open(pollUrl, '_blank', 'location=no');
+    var doLoginLocal = function(callback, cbrowser, loginUrl) {
+        var cb = window.open(loginUrl, '_blank', 'location=no');
 
+        cb.addEventListener('loadstop', function(event) {
+            var cloudUserId;
+            console.debug(event.type + ' - ' + event.url);
 
-        // close child browser
-        var closeCb = function(userId){
-            clearInterval(pollTimer);
-            callback(userId);
-        };
+            // Browser was redirected to the desired location
+            if (loginUrl === event.url) {
+                $.ajax({ url: loginUrl, dataType: 'json'})
+                    .done(function(pollData) {
+                        if (pollData.state === 1) {
+                            cloudUserId = pollData.userid;
+                            pcapi.setCloudLogin(cloudUserId);
+                        }
+                    })
+                    .fail(function(error, status, httpStatus) {
+                        console.debug('Error fetching the username' + httpStatus);
+                    })
+                    .always(function() {
+                        callback(cloudUserId);
+                        cb.close();
+                    });
+            }
+        });
 
-        console.debug('Poll: ' + pollUrl);
-        pollTimer = setInterval(function(){
-            $.ajax({
-                url: pollUrl,
-                timeout: 3000,
-                success: function(pollData){
-                    pollTimerCount += pollInterval;
-
-                    // Ignore html responses (like the redirection from Shibboleth)
-                    if(typeof(pollData) === 'object'){
-                      if(pollData.state === 1 || pollTimerCount > pollForMax){
-                          var cloudUserId;
-                          if(pollData.state === 1 ){
-                              cloudUserId = pollData.userid;
-                              _this.setCloudLogin(cloudUserId);
-                          }
-                          cb.close();
-                          closeCb(cloudUserId);
-                      }
-                    }
-                },
-                error: function(error){
-                    console.error("Problem polling api: " + error.statusText);
-                    closeCb();
-                },
-            });
-        }, pollInterval);
-
-        if(cbrowser){
-            // caller may want access to child browser reference
+        // caller may want access to child browser reference
+        if (typeof cbrowser === 'function') {
             cbrowser(cb);
         }
     };
